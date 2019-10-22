@@ -11,14 +11,17 @@ import (
 	"strings"
 )
 
+// Errors is an abstraction for a slice of errors
 type Errors []error
 
-func (o *Errors) Combine(message string, separator string) error {
-	if len(*o) == 0 {
+// Combine takes the slice of errors and combines it into a single
+// error that represents the errors in a single message.
+func (o Errors) Combine(message string, separator string) error {
+	if len(o) == 0 {
 		return nil
 	}
 	var errorStrings []string
-	for _, err := range *o {
+	for _, err := range o {
 		errorStrings = append(errorStrings, err.Error())
 	}
 
@@ -29,8 +32,8 @@ func (o *Errors) Combine(message string, separator string) error {
 	return errors.New(fmt.Sprintf("%s: %s", message, strings.Join(errorStrings, separator)))
 }
 
-func (o *Errors) Error() string {
-	if len(*o) == 0 {
+func (o Errors) Error() string {
+	if len(o) == 0 {
 		return ""
 	}
 	return o.Combine("", "; ").Error()
