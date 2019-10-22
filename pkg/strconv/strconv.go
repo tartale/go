@@ -117,6 +117,8 @@ func ParsePrimitive(s string, primitivePtr interface{}, optionalBase ...int) err
 			return err
 		}
 		*v = result
+	case *string:
+		*v = s
 	default:
 		return fmt.Errorf("Unexpected type: %T; ensure passed argument is a pointer to a primitive", primitivePtr)
 	}
