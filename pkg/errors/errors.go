@@ -35,10 +35,3 @@ func (o *Errors) Error() string {
 	}
 	return o.Combine("", "; ").Error()
 }
-
-func (o *Errors) Try(f func() error) {
-	err := f()
-	if err != nil {
-		*o = append(*o, err)
-	}
-}

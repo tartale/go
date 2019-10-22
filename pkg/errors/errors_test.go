@@ -60,39 +60,3 @@ func TestErrors_Error(t *testing.T) {
 
 	assert.Equal(t, "WTF; How did this happen?; Worked on my machine", errs.Error())
 }
-
-func FunctionThatSucceeds(a int, b int) (int, error) {
-	return a + b, nil
-}
-
-func FunctionThatErrors(a int, b int) (int, error) {
-	return 0, errors.New("WTF")
-}
-
-func TestErrors_Try_SuccessfulFunction(t *testing.T) {
-	var errs Errors
-
-	a := 10
-	b := 20
-	errs.Try(func() error {
-		_, err := FunctionThatSucceeds(a, b)
-
-		return err
-	})
-
-	assert.Equal(t, 0, len(errs))
-}
-
-func TestErrors_Try_ErrorFunction(t *testing.T) {
-	var errs Errors
-
-	a := 10
-	b := 20
-	errs.Try(func() error {
-		_, err := FunctionThatErrors(a, b)
-
-		return err
-	})
-
-	assert.Equal(t, 1, len(errs))
-}
