@@ -20,6 +20,7 @@ func TestParsePrimitive_ValidStrings(t *testing.T) {
 	var testUint16 uint16
 	var testUint32 uint32
 	var testUint64 uint64
+	var testString string
 	var err error
 
 	err = ParsePrimitive("true", &testBool)
@@ -73,6 +74,10 @@ func TestParsePrimitive_ValidStrings(t *testing.T) {
 	err = ParsePrimitive("10", &testUint64)
 	assert.Nil(t, err)
 	assert.Equal(t, uint64(10), testUint64)
+
+	err = ParsePrimitive("10", &testString)
+	assert.Nil(t, err)
+	assert.Equal(t, "10", testString)
 }
 
 func TestParsePrimitive_InvalidStrings(t *testing.T) {
@@ -158,6 +163,7 @@ func TestParsePrimitive_NonBase10(t *testing.T) {
 	var testUint16 uint16
 	var testUint32 uint32
 	var testUint64 uint64
+	var testString string
 	var err error
 
 	err = ParsePrimitive("true", &testBool, 2)
@@ -211,6 +217,10 @@ func TestParsePrimitive_NonBase10(t *testing.T) {
 	err = ParsePrimitive("10", &testUint64, 2)
 	assert.Nil(t, err)
 	assert.Equal(t, uint64(2), testUint64)
+
+	err = ParsePrimitive("10", &testString, 2)
+	assert.Nil(t, err)
+	assert.Equal(t, "10", testString)
 }
 
 func TestParsePrimitive_TooManyOptionalArgs(t *testing.T) {
