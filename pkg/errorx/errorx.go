@@ -1,8 +1,9 @@
+// Package errors
 // Copyright 2019 Tom Artale. All rights reserved.
 // Use of this source code is governed by an MIT-style
 // license that can be found in the LICENSE file.
 //
-// Package errors implements functions to manipulate errors.
+// Package errorx implements functions to manipulate errors.
 package errors
 
 import (
@@ -22,6 +23,9 @@ func (o Errors) Combine(message string, separator string) error {
 	}
 	var errorStrings []string
 	for _, err := range o {
+		if err == nil {
+			continue
+		}
 		errorStrings = append(errorStrings, err.Error())
 	}
 

@@ -1,0 +1,14 @@
+version: 2.1
+
+workflows:
+  unit-test:
+    jobs:
+      - unit-test
+
+jobs:
+  unit-test:
+    docker:
+      - image: cimg/go:1.17
+    steps:
+      - checkout
+      - run: go test ./...

@@ -60,3 +60,13 @@ func TestErrors_Error(t *testing.T) {
 
 	assert.Equal(t, "WTF; How did this happen?; Worked on my machine", errs.Error())
 }
+
+func TestErrors_NilError(t *testing.T) {
+	var errs Errors
+
+	errs = append(errs, errors.New("WTF"))
+	errs = append(errs, nil)
+	errs = append(errs, errors.New("Worked on my machine"))
+
+	assert.Equal(t, "WTF; Worked on my machine", errs.Error())
+}
