@@ -12,7 +12,7 @@ var textCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(textCmd)
 
-	textCmd.PersistentFlags().StringVarP(&inputTemplate, "template", "t", "", "A golang template to be rendered")
+	textCmd.PersistentFlags().StringVarP(&inputTemplate, "template", "t", "", "A golang template to be rendered; defaults to stdin")
 	textCmd.PersistentFlags().StringVarP(&inputData, "input", "i", "", "A structured file or string that represents the data values to be used in rendering the template")
 	textCmd.PersistentFlags().StringVarP(&output, "output", "o", "", "A file to which the rendered template should written; defaults to stdout")
 }

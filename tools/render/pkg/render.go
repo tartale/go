@@ -11,6 +11,7 @@ import (
 	"github.com/Masterminds/sprig"
 )
 
+var DefaultInputReader io.Reader = os.Stdin
 var DefaultOutputWriter io.Writer = os.Stdout
 
 func RenderTextFromJSON(inputTemplate, inputData, output string) error {
@@ -32,13 +33,20 @@ func RenderTextFromJSON(inputTemplate, inputData, output string) error {
 }
 
 func getInputTemplate(input string) (string, error) {
-	inputFile, err := os.Open(input)
-	if err != nil {
-		// assume the input is a string
-		return input, nil
+	var (
+		inputReader io.Reader
+		err          error
+	)
+
+	if input != "" {
+		inputReader, err = os.Open(input)
+		if err != nil {
+
+		}
+	} else {
+		inputReader = DefaultInputReader
 	}
-	defer inputFile.Close()
-	inputFileContents, err := ioutil.ReadAll(inputFile)
+	inputFileContents, err := ioutil.ReadAll(inputReader)
 	if err != nil {
 		return "", err
 	}
