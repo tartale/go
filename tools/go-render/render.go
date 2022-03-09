@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 package main
 
-import "github.com/tartale/go/tools/render/cmd"
+import "github.com/tartale/go/tools/go-render/cmd"
 
 func main() {
 	cmd.Execute()

@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/tartale/go/tools/render/pkg"
+	"github.com/tartale/go/tools/go-render/pkg"
 )
 
 var fromJSONCmd = &cobra.Command{

@@ -13,7 +13,7 @@ var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "render",
+	Use:   "go-render",
 	Short: "CLI tool for rendering go templates from structured input data",
 }
 
