@@ -18,15 +18,15 @@ type Errors []error
 // Combine takes the slice of errors and combines it into a single
 // error that represents the errors in a single message.
 func (o Errors) Combine(message string, separator string) error {
-	if len(o) == 0 {
-		return nil
-	}
 	var errorStrings []string
 	for _, err := range o {
 		if err == nil {
 			continue
 		}
 		errorStrings = append(errorStrings, err.Error())
+	}
+	if len(errorStrings) == 0 {
+		return nil
 	}
 
 	if message == "" {

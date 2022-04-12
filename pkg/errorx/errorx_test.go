@@ -31,6 +31,16 @@ func TestErrors_Combine_MultipleErrors(t *testing.T) {
 	assert.Equal(t, errors.New("WTF; How did this happen?; Worked on my machine"), errs.Combine("", "; "))
 }
 
+func TestErrors_Combine_AllNilErrors(t *testing.T) {
+	var errs Errors
+
+	errs = append(errs, nil)
+	errs = append(errs, nil)
+	errs = append(errs, nil)
+
+	assert.Equal(t, nil, errs.Combine("", "; "))
+}
+
 func TestErrors_Combine_PrefixMessage(t *testing.T) {
 	var errs Errors
 
