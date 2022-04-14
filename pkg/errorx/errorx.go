@@ -33,7 +33,7 @@ func (o Errors) Combine(message string, separator string) error {
 		return errors.New(strings.Join(errorStrings, separator))
 	}
 
-	return errors.New(fmt.Sprintf("%s: %s", message, strings.Join(errorStrings, separator)))
+	return errors.New(fmt.Sprintf("%s %s", message, strings.Join(errorStrings, separator)))
 }
 
 func (o Errors) Error() string {
