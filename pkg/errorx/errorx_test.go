@@ -49,7 +49,7 @@ func TestErrors_Combine_PrefixMessage(t *testing.T) {
 	errs = append(errs, errors.New("Worked on my machine"))
 
 	assert.Equal(t, errors.New("error while doing stuff: WTF; How did this happen?; Worked on my machine"),
-		errs.Combine("error while doing stuff:", "; "))
+		errs.Combine("error while doing stuff: ", "; "))
 }
 
 func TestErrors_Combine_LineSeparator(t *testing.T) {
