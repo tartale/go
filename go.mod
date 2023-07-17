@@ -1,6 +1,6 @@
 module github.com/tartale/go
 
-go 1.19
+go 1.20
 
 replace github.com/imdario/mergo => dario.cat/mergo v1.0.0
 
