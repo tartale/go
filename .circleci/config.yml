@@ -8,7 +8,7 @@ workflows:
 jobs:
   unit-test:
     docker:
-      - image: golang:1.17
+      - image: golang:1.20
     steps:
       - checkout
       - run: go test ./...
