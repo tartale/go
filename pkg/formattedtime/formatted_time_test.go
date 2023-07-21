@@ -9,14 +9,14 @@ import (
 )
 
 type TestStruct struct {
-	Foo string        `json:"foo,omitempty"`
-	Bar FormattedTime `json:"bar,omitempty"`
+	Foo string `json:"foo,omitempty"`
+	Bar Time   `json:"bar,omitempty"`
 }
 
 func TestFormattedTime_JSONMarshal(t *testing.T) {
 
 	myTime, _ := time.Parse(time.RFC3339, "1976-07-31T14:30:00Z")
-	formattedTime := FormattedTime{myTime, time.Kitchen}
+	formattedTime := Time{myTime, time.Kitchen}
 
 	testStruct := TestStruct{Foo: "foo", Bar: formattedTime}
 	testJson, err := json.Marshal(testStruct)
