@@ -1,7 +1,6 @@
 package formattedtime
 
 import (
-	"encoding/json"
 	"testing"
 	"time"
 
@@ -10,21 +9,24 @@ import (
 
 type TestStruct struct {
 	Foo string `json:"foo,omitempty"`
-	Bar Time   `json:"bar,omitempty"`
+	Bar Time   `json:"bar,omitempty" format:"2006-01-02"`
+}
+
+func TestAddTimeMarshalingl(t *testing.T) {
+	testStruct := TestStruct{}
+	addTimeMarshaling[TestStruct](&testStruct)
+
+	assert.Equal(t, "2006-01-02", testStruct.Bar.Layout)
 }
 
 func TestFormattedTime_JSONMarshal(t *testing.T) {
 
 	myTime, _ := time.Parse(time.RFC3339, "1976-07-31T14:30:00Z")
-	formattedTime := Time{myTime, time.Kitchen}
+	formattedTime := Time{Time: myTime}
 
 	testStruct := TestStruct{Foo: "foo", Bar: formattedTime}
-	testJson, err := json.Marshal(testStruct)
-	assert.Nil(t, err)
-	assert.Equal(t, `{"foo":"foo","bar":"2:30PM"}`, string(testJson))
+	testJson, err := MarshalJSON[TestStruct](&testStruct)
 
-	testStruct.Bar.Layout = time.DateOnly
-	testJson, err = json.Marshal(testStruct)
 	assert.Nil(t, err)
 	assert.Equal(t, `{"foo":"foo","bar":"1976-07-31"}`, string(testJson))
 
@@ -32,21 +34,12 @@ func TestFormattedTime_JSONMarshal(t *testing.T) {
 
 func TestJsonTime_JSONUnmarshal(t *testing.T) {
 
-	formattedTime := Now(time.RFC3339)
-	testJson := `{"foo":"foo","bar":"1976-07-31T14:30:00Z"}`
-	testStruct := TestStruct{Foo: "", Bar: *formattedTime}
+	testJson := `{"foo":"foo","bar":"1976-07-31"}`
+	testStruct := TestStruct{}
 
-	err := json.Unmarshal([]byte(testJson), &testStruct)
+	err := UnmarshalJSON[TestStruct]([]byte(testJson), &testStruct)
 	assert.Nil(t, err)
-	assert.Equal(t, time.July, formattedTime.Month())
-
-	formattedTime.Layout = time.Kitchen
-	testJson = `{"foo":"foo","bar":"2:30PM"}`
-	testStruct.Bar = *formattedTime
-
-	err = json.Unmarshal([]byte(testJson), &testStruct)
-	assert.Nil(t, err)
-	assert.Equal(t, 14, testStruct.Bar.Hour())
-	assert.Equal(t, 30, testStruct.Bar.Minute())
-
+	assert.Equal(t, 1976, testStruct.Bar.Year())
+	assert.Equal(t, time.July, testStruct.Bar.Month())
+	assert.Equal(t, 31, testStruct.Bar.Day())
 }

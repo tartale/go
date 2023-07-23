@@ -1,32 +1,42 @@
 package formattedtime
 
 import (
+	"encoding/json"
+	"reflect"
 	"strings"
 	"time"
+
+	"github.com/tartale/go/pkg/structs"
 )
 
-// Time allows marshal/unmarshal of a time field using a custom format.
-// Inspired by this SO post:
-//
-//	https://stackoverflow.com/a/20510912/1258206
+var DefaultFormat = time.RFC3339
+
+/*
+Time allows marshal/unmarshal of a time field using a custom format.
+Inspired by this SO post:
+
+	https://stackoverflow.com/a/20510912/1258206
+
+The default time format is the RFC3339 format that is currently expected
+by the default json marshaler.
+
+Example:
+
+	type MyStruct struct {
+		// The 'format' tag specifies the time layout expected in a JSON document
+		MyTime formattedtime.Time `json:"myTime" format:"2006-01-02"`
+	}
+	myStruct := MyStruct{}
+	myJson := `{"foo":"foo","bar":"1976-07-31"}`
+	err := formattedtime.UnmarshalJSON([]byte(myJson), &myStruct)
+*/
 type Time struct {
 	time.Time
-	Layout string
+	Layout string `json:"-"`
 }
 
-func New(t time.Time, layout string) *Time {
-
-	return &Time{t, layout}
-}
-
-func Zero(layout string) *Time {
-
-	return &Time{time.Time{}, layout}
-}
-
-func Now(layout string) *Time {
-
-	return &Time{time.Now(), layout}
+func Now() *Time {
+	return &Time{Time: time.Now()}
 }
 
 func (f *Time) Format() string {
@@ -45,19 +55,9 @@ func (f *Time) ParseFrom(value string) error {
 	return nil
 }
 
-func (f *Time) MarshalText() ([]byte, error) {
+func (t *Time) MarshalJSON() ([]byte, error) {
 
-	return []byte(f.Format()), nil
-}
-
-func (f *Time) UnmarshalText(text []byte) error {
-
-	return f.ParseFrom(string(text))
-}
-
-func (f *Time) MarshalJSON() ([]byte, error) {
-
-	return []byte(`"` + f.Format() + `"`), nil
+	return []byte(`"` + t.Format() + `"`), nil
 }
 
 func (f *Time) UnmarshalJSON(data []byte) error {
@@ -69,4 +69,33 @@ func (f *Time) UnmarshalJSON(data []byte) error {
 	}
 
 	return nil
+}
+
+func MarshalJSON[T any](t *T) ([]byte, error) {
+
+	addTimeMarshaling[T](t)
+	return json.Marshal(t)
+}
+
+func UnmarshalJSON[T any](data []byte, t *T) error {
+
+	addTimeMarshaling[T](t)
+	return json.Unmarshal(data, t)
+}
+
+func addTimeMarshaling[T any](t *T) {
+
+	setLayout := func(field reflect.StructField, value reflect.Value) error {
+		switch value.Interface().(type) {
+		case Time:
+			if tag := field.Tag.Get("format"); tag != "" {
+				value.FieldByName("Layout").SetString(tag)
+			} else {
+				value.FieldByName("Layout").SetString(DefaultFormat)
+			}
+		}
+
+		return nil
+	}
+	structs.Walk(t, setLayout)
 }
