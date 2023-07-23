@@ -35,6 +35,10 @@ type Time struct {
 	Layout string `json:"-"`
 }
 
+func New(t time.Time) *Time {
+	return &Time{Time: t}
+}
+
 func Now() *Time {
 	return &Time{Time: time.Now()}
 }
