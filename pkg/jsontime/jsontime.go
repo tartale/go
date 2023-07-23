@@ -1,4 +1,4 @@
-package formattedtime
+package jsontime
 
 import (
 	"encoding/json"
@@ -28,7 +28,7 @@ Example:
 	}
 	myStruct := MyStruct{}
 	myJson := `{"foo":"foo","bar":"1976-07-31"}`
-	err := formattedtime.UnmarshalJSON([]byte(myJson), &myStruct)
+	err := jsontime.UnmarshalJSON([]byte(myJson), &myStruct)
 */
 type Time struct {
 	time.Time

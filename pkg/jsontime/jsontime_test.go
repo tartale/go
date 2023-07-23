@@ -1,4 +1,4 @@
-package formattedtime
+package jsontime
 
 import (
 	"testing"
@@ -19,7 +19,7 @@ func TestAddTimeMarshalingl(t *testing.T) {
 	assert.Equal(t, "2006-01-02", testStruct.Bar.Layout)
 }
 
-func TestFormattedTime_JSONMarshal(t *testing.T) {
+func TestJSONTime_JSONMarshal(t *testing.T) {
 
 	myTime, _ := time.Parse(time.RFC3339, "1976-07-31T14:30:00Z")
 	formattedTime := Time{Time: myTime}
@@ -32,7 +32,7 @@ func TestFormattedTime_JSONMarshal(t *testing.T) {
 
 }
 
-func TestJsonTime_JSONUnmarshal(t *testing.T) {
+func TestJSONTime_JSONUnmarshal(t *testing.T) {
 
 	testJson := `{"foo":"foo","bar":"1976-07-31"}`
 	testStruct := TestStruct{}
