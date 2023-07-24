@@ -491,9 +491,14 @@ func (s *Struct) structFields() []reflect.StructField {
 func strctVal(s interface{}) reflect.Value {
 	v := reflect.ValueOf(s)
 
-	// if pointer get the underlying element≤
-	for v.Kind() == reflect.Ptr {
-		v = v.Elem()
+	// if pointer or interface get the underlying element≤
+	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
+		if v.Kind() == reflect.Ptr {
+			v = v.Elem()
+		}
+		if v.Kind() == reflect.Interface {
+			v = reflect.ValueOf(v.Interface())
+		}
 	}
 
 	if v.Kind() != reflect.Struct {
