@@ -50,30 +50,19 @@ func (s *Struct) Walk(fn WalkFn) error {
 	fields := s.structFields()
 
 	for _, field := range fields {
-		name := field.Name
-		val := s.value.FieldByName(name)
-		isSubStruct := false
+		val := s.value.FieldByName(field.Name)
 
 		_, tagOpts := parseTag(field.Tag.Get(s.TagName))
 
-		if !tagOpts.Has("omitnested") {
-			v := reflect.ValueOf(val.Interface())
-			if v.Kind() == reflect.Ptr {
-				v = v.Elem()
-			}
-
-			switch v.Kind() {
-			case reflect.Struct:
-				isSubStruct = true
-			}
-		}
-
-		if isSubStruct {
+		if !tagOpts.Has("omitnested") && isSubStruct(val) {
 			if !tagOpts.Has("flatten") {
 				err := fn(field, val)
 				if err != nil {
 					return err
 				}
+			}
+			if val.CanAddr() {
+				val = val.Addr()
 			}
 			err := New(val.Interface()).Walk(fn)
 			if err != nil {
@@ -88,6 +77,20 @@ func (s *Struct) Walk(fn WalkFn) error {
 	}
 
 	return nil
+}
+
+func isSubStruct(val reflect.Value) bool {
+	v := reflect.ValueOf(val.Interface())
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
+	switch v.Kind() {
+	case reflect.Struct:
+		return true
+	}
+
+	return false
 }
 
 // Map converts the given struct to a map[string]interface{}, where the keys
@@ -461,6 +464,8 @@ func (s *Struct) Name() string {
 // is a convenient helper method to avoid duplicate code in some of the
 // functions.
 func (s *Struct) structFields() []reflect.StructField {
+	name := s.Name()
+	_ = name
 	t := s.value.Type()
 
 	var f []reflect.StructField
@@ -492,7 +497,7 @@ func strctVal(s interface{}) reflect.Value {
 	}
 
 	if v.Kind() != reflect.Struct {
-		panic("not struct")
+		panic(fmt.Sprintf("not struct: %s", v.Kind()))
 	}
 
 	return v

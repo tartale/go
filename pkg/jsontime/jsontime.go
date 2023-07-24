@@ -75,31 +75,36 @@ func (f *Time) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func MarshalJSON[T any](t *T) ([]byte, error) {
+func MarshalJSON[T any](t any) ([]byte, error) {
 
-	addTimeMarshaling[T](t)
-	return json.Marshal(t)
+	v := t.(*T)
+	addTimeMarshaling(t)
+	return json.Marshal(v)
 }
 
-func UnmarshalJSON[T any](data []byte, t *T) error {
+func UnmarshalJSON[T any](data []byte, t any) error {
 
-	addTimeMarshaling[T](t)
-	return json.Unmarshal(data, t)
+	v := t.(*T)
+	addTimeMarshaling(t)
+	return json.Unmarshal(data, v)
 }
 
-func addTimeMarshaling[T any](t *T) {
+func addTimeMarshaling(v any) {
 
 	setLayout := func(field reflect.StructField, value reflect.Value) error {
+
 		switch value.Interface().(type) {
 		case Time:
+			layout := value.FieldByName("Layout")
 			if tag := field.Tag.Get("format"); tag != "" {
-				value.FieldByName("Layout").SetString(tag)
+				layout.SetString(tag)
 			} else {
-				value.FieldByName("Layout").SetString(DefaultFormat)
+				layout.SetString(DefaultFormat)
 			}
 		}
 
 		return nil
 	}
-	structs.Walk(t, setLayout)
+
+	structs.Walk(v, setLayout)
 }
