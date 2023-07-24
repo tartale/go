@@ -66,7 +66,7 @@ func TestJSONTime_JSONMarshal(t *testing.T) {
 	jsonTime := Time{Time: myTime}
 
 	testStruct := TestStruct{Foo: "foo", Bar: jsonTime}
-	testJson, err := MarshalJSON[TestStruct](&testStruct)
+	testJson, err := MarshalJSON(&testStruct)
 
 	assert.Nil(t, err)
 	assert.Equal(t, `{"foo":"foo","bar":"1976-07-31"}`, string(testJson))
@@ -80,7 +80,7 @@ func TestJSONTime_JSONMarshal_AnyField(t *testing.T) {
 
 	testStruct := TestStruct{Foo: "foo", Bar: jsonTime}
 	testStructWithAnyField := TestStructWithAnyField{"foo", testStruct}
-	testJson, err := MarshalJSON[TestStructWithAnyField](&testStructWithAnyField)
+	testJson, err := MarshalJSON(&testStructWithAnyField)
 
 	assert.Nil(t, err)
 	assert.Equal(t, `{"foo":"foo","nested":{"foo":"foo","bar":"1976-07-31"}}`, string(testJson))
@@ -94,7 +94,7 @@ func TestJSONTime_JSONMarshal_NestedAnyField(t *testing.T) {
 
 	testStruct := TestStruct{Foo: "foo", Bar: jsonTime}
 	testStructWithNestedAnyField := TestStructWithNestedAnyField{"foo", &testStruct}
-	testJson, err := MarshalJSON[TestStructWithNestedAnyField](&testStructWithNestedAnyField)
+	testJson, err := MarshalJSON(&testStructWithNestedAnyField)
 
 	assert.Nil(t, err)
 	assert.Equal(t, `{"foo":"foo","nested":{"foo":"foo","bar":"1976-07-31"}}`, string(testJson))
@@ -106,7 +106,7 @@ func TestJSONTime_JSONUnmarshal(t *testing.T) {
 	testJson := `{"foo":"foo","bar":"1976-07-31"}`
 	testStruct := TestStruct{}
 
-	err := UnmarshalJSON[TestStruct]([]byte(testJson), &testStruct)
+	err := UnmarshalJSON([]byte(testJson), &testStruct)
 	assert.Nil(t, err)
 	assert.Equal(t, 1976, testStruct.Bar.Year())
 	assert.Equal(t, time.July, testStruct.Bar.Month())
@@ -118,7 +118,7 @@ func TestJSONTime_JSONUnmarshal_AnyField(t *testing.T) {
 	testJson := `{"foo":"foo","nested":{"foo":"foo","bar":"1976-07-31"}}`
 	testStructWithAnyField := TestStructWithAnyField{}
 
-	err := UnmarshalJSON[TestStructWithAnyField]([]byte(testJson), &testStructWithAnyField)
+	err := UnmarshalJSON([]byte(testJson), &testStructWithAnyField)
 	testStruct := testStructWithAnyField.Nested
 	assert.Nil(t, err)
 	assert.Equal(t, 1976, testStruct.Bar.Year())
@@ -132,7 +132,7 @@ func TestJSONTime_JSONUnmarshal_NestedAnyField(t *testing.T) {
 	testJson := `{"foo":"foo","nested":{"foo":"foo","bar":"1976-07-31"}}`
 	testStructWithNestedAnyField := TestStructWithNestedAnyField{Nested: &TestStruct{}}
 
-	err := UnmarshalJSON[TestStructWithNestedAnyField]([]byte(testJson), &testStructWithNestedAnyField)
+	err := UnmarshalJSON([]byte(testJson), &testStructWithNestedAnyField)
 	testStruct := testStructWithNestedAnyField.Nested.(*TestStruct)
 	assert.Nil(t, err)
 	assert.Equal(t, 1976, testStruct.Bar.Year())

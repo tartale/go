@@ -75,17 +75,15 @@ func (f *Time) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func MarshalJSON[T any](t any) ([]byte, error) {
+func MarshalJSON(v any) ([]byte, error) {
 
-	v := t.(*T)
-	addTimeMarshaling(t)
+	addTimeMarshaling(v)
 	return json.Marshal(v)
 }
 
-func UnmarshalJSON[T any](data []byte, t any) error {
+func UnmarshalJSON(data []byte, v any) error {
 
-	v := t.(*T)
-	addTimeMarshaling(t)
+	addTimeMarshaling(v)
 	return json.Unmarshal(data, v)
 }
 
