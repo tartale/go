@@ -31,8 +31,8 @@ Example:
 	err := jsontime.UnmarshalJSON([]byte(myJson), &myStruct)
 */
 type Time struct {
-	time.Time
-	Layout string `json:"-"`
+	time.Time `json:"-"`
+	Raw       string `json:"-"`
 }
 
 func New(t time.Time) *Time {
@@ -43,66 +43,81 @@ func Now() *Time {
 	return &Time{Time: time.Now()}
 }
 
-func (f *Time) Format() string {
-
-	return f.Time.Format(f.Layout)
-}
-
-func (f *Time) ParseFrom(value string) error {
-
-	newTime, err := time.Parse(f.Layout, value)
-	if err != nil {
-		return err
-	}
-	f.Time = newTime
-
-	return nil
-}
-
 func (t *Time) MarshalJSON() ([]byte, error) {
 
-	return []byte(`"` + t.Format() + `"`), nil
+	return []byte(`"` + t.Raw + `"`), nil
 }
 
-func (f *Time) UnmarshalJSON(data []byte) error {
+func (t *Time) UnmarshalJSON(data []byte) error {
 
-	unquoted := strings.Trim(string(data), `"`)
-	err := f.ParseFrom(unquoted)
-	if err != nil {
-		return err
-	}
-
+	t.Raw = string(data)
 	return nil
 }
 
 func MarshalJSON(v any) ([]byte, error) {
 
-	addTimeMarshaling(v)
+	marshalTime(v)
 	return json.Marshal(v)
 }
 
 func UnmarshalJSON(data []byte, v any) error {
 
-	addTimeMarshaling(v)
-	return json.Unmarshal(data, v)
+	err := json.Unmarshal(data, v)
+	if err != nil {
+		return nil
+	}
+	unmarshalTime(v)
+
+	return nil
 }
 
-func addTimeMarshaling(v any) {
+func marshalTime(v any) {
 
-	setLayout := func(field reflect.StructField, value reflect.Value) error {
+	walkFn := func(field reflect.StructField, value reflect.Value) error {
 
-		switch value.Interface().(type) {
+		switch val := value.Interface().(type) {
 		case Time:
-			layout := value.FieldByName("Layout")
-			if tag := field.Tag.Get("format"); tag != "" {
-				layout.SetString(tag)
-			} else {
-				layout.SetString(DefaultFormat)
-			}
+			format := getFormat(field)
+			newRawValue := val.Time.Format(format)
+			raw := value.FieldByName("Raw")
+			raw.Set(reflect.ValueOf(newRawValue))
 		}
 
 		return nil
 	}
 
-	structs.Walk(v, setLayout)
+	structs.Walk(v, walkFn)
+}
+
+func unmarshalTime(v any) {
+
+	walkFn := func(field reflect.StructField, value reflect.Value) error {
+
+		switch val := value.Interface().(type) {
+		case Time:
+			format := getFormat(field)
+			unquoted := strings.Trim(val.Raw, `"`)
+			newTime, err := time.Parse(format, unquoted)
+			if err != nil {
+				return err
+			}
+			t := value.FieldByName("Time")
+			t.Set(reflect.ValueOf(newTime))
+		}
+
+		return nil
+	}
+
+	structs.Walk(v, walkFn)
+}
+
+func getFormat(f reflect.StructField) string {
+	var format string
+	if tag := f.Tag.Get("format"); tag != "" {
+		format = tag
+	} else {
+		format = DefaultFormat
+	}
+
+	return format
 }
