@@ -32,67 +32,6 @@ func New(s interface{}) *Struct {
 	}
 }
 
-// WalkFn is a callback that can be used in the Walk method, below.
-// While iterating the struct's fields, the callback will be invoked
-// for every field/value pair.  If the callback function returns
-// an error, the iterating is aborted and the error returned from
-// the Walk function itself.
-type WalkFn func(field reflect.StructField, value reflect.Value) error
-
-// Walk iterates the struct's fields using depth-first search, calling the given
-// callback function.  It panics if s's kind is not struct.  Supports
-// the 'omitnested' and 'flatten' tags on nested struct fields.
-// If 'omitnested' is present, the Walk callback will be invoked for the
-// nested struct field itself, but not for the nested struct's fields.
-// If 'flatten' is present, the Walk callback will be invoked for the
-// nested struct's fields, but not for the top-level nested struct itself.
-func (s *Struct) Walk(fn WalkFn) error {
-	fields := s.structFields()
-
-	for _, field := range fields {
-		val := s.value.FieldByName(field.Name)
-
-		_, tagOpts := parseTag(field.Tag.Get(s.TagName))
-
-		if !tagOpts.Has("omitnested") && isSubStruct(val) {
-			if !tagOpts.Has("flatten") {
-				err := fn(field, val)
-				if err != nil {
-					return err
-				}
-			}
-			if val.CanAddr() {
-				val = val.Addr()
-			}
-			err := New(val.Interface()).Walk(fn)
-			if err != nil {
-				return err
-			}
-		} else {
-			err := fn(field, val)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-func isSubStruct(val reflect.Value) bool {
-	v := reflect.ValueOf(val.Interface())
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-
-	switch v.Kind() {
-	case reflect.Struct:
-		return true
-	}
-
-	return false
-}
-
 // Map converts the given struct to a map[string]interface{}, where the keys
 // of the map are the field names and the values of the map the associated
 // values of the fields. The default key string is the struct field name but
@@ -506,12 +445,6 @@ func strctVal(s interface{}) reflect.Value {
 	}
 
 	return v
-}
-
-// Walk iterates the struct's fields using depth-first search, calling the given
-// callback function.  It panics if s's kind is not struct.
-func Walk(s interface{}, fn WalkFn) error {
-	return New(s).Walk(fn)
 }
 
 // Map converts the given struct to a map[string]interface{}. For more info
