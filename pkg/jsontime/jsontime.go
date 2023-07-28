@@ -45,7 +45,8 @@ func Now() *Time {
 
 func (t *Time) MarshalJSON() ([]byte, error) {
 
-	return []byte(`"` + t.Raw + `"`), nil
+	unquoted := strings.Trim(t.Raw, `"`)
+	return []byte(`"` + unquoted + `"`), nil
 }
 
 func (t *Time) UnmarshalJSON(data []byte) error {
@@ -80,7 +81,7 @@ func marshalTime(v any) {
 			format := getFormat(field)
 			newRawValue := val.Time.Format(format)
 			raw := value.FieldByName("Raw")
-			raw.Set(reflect.ValueOf(newRawValue))
+			raw.SetString(newRawValue)
 		}
 
 		return nil
