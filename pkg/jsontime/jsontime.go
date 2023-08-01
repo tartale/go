@@ -66,7 +66,7 @@ func UnmarshalJSON(data []byte, v any) error {
 
 	err := json.Unmarshal(data, v)
 	if err != nil {
-		return nil
+		return err
 	}
 	unmarshalTime(v)
 
