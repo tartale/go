@@ -51,7 +51,8 @@ func (t *Time) MarshalJSON() ([]byte, error) {
 
 func (t *Time) UnmarshalJSON(data []byte) error {
 
-	t.Raw = string(data)
+	unquoted := strings.Trim(string(data), `"`)
+	t.Raw = unquoted
 	return nil
 }
 
