@@ -83,6 +83,7 @@ func marshalTime(v any) {
 			newRawValue := val.Time.Format(format)
 			raw := value.FieldByName("Raw")
 			raw.SetString(newRawValue)
+			Logger.Debugf("marshaled json time field; name: %s, rawValue: %s", field.Name, newRawValue)
 		}
 
 		return nil
@@ -105,6 +106,7 @@ func unmarshalTime(v any) {
 			}
 			t := value.FieldByName("Time")
 			t.Set(reflect.ValueOf(newTime))
+			Logger.Debugf("unmarshaled json time field; name: %s, newTime: %s", field.Name, newTime)
 		}
 
 		return nil
