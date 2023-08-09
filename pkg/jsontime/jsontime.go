@@ -56,6 +56,12 @@ func (t *Time) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+func MarshalJSONIndent(v any, prefix, indent string) ([]byte, error) {
+
+	marshalTime(v)
+	return json.MarshalIndent(v, prefix, indent)
+}
+
 func MarshalJSON(v any) ([]byte, error) {
 
 	marshalTime(v)
