@@ -27,7 +27,7 @@ func (s *Struct) Walk(fn WalkFn) error {
 	for _, field := range fields {
 		val := s.value.FieldByName(field.Name)
 
-		if err := s.walkValue(field, val, fn); err != nil {
+		if err := s.WalkValue(field, val, fn); err != nil {
 			return err
 		}
 	}
@@ -35,15 +35,15 @@ func (s *Struct) Walk(fn WalkFn) error {
 	return nil
 }
 
-func (s *Struct) walkValue(field reflect.StructField, val reflect.Value, fn WalkFn) error {
+func (s *Struct) WalkValue(field reflect.StructField, val reflect.Value, fn WalkFn) error {
 	_, tagOpts := parseTag(field.Tag.Get(s.TagName))
 
-	if !tagOpts.Has("omitnested") && isSubStruct(val) {
-		return s.walkSubStruct(field, val, fn, tagOpts.Has("flatten"))
+	if !tagOpts.Has("omitnested") && IsSubStruct(val) {
+		return s.WalkSubStruct(field, val, fn, tagOpts.Has("flatten"))
 	}
 
-	if isSlice(val) {
-		return s.walkSlice(val, fn)
+	if IsSlice(val) {
+		return s.WalkSlice(val, fn)
 	}
 
 	return fn(field, val)
@@ -51,7 +51,7 @@ func (s *Struct) walkValue(field reflect.StructField, val reflect.Value, fn Walk
 
 // handleSubStruct deals with sub-structures. If the 'flatten' tag is not set, it calls the walk function
 // on the current field. In any case, it walks over the nested structure.
-func (s *Struct) walkSubStruct(field reflect.StructField, val reflect.Value, fn WalkFn, flatten bool) error {
+func (s *Struct) WalkSubStruct(field reflect.StructField, val reflect.Value, fn WalkFn, flatten bool) error {
 	if !flatten {
 		if err := fn(field, val); err != nil {
 			return err
@@ -66,7 +66,7 @@ func (s *Struct) walkSubStruct(field reflect.StructField, val reflect.Value, fn 
 }
 
 // handleSlice walks over each element of the slice, if the element is a struct.
-func (s *Struct) walkSlice(val reflect.Value, fn WalkFn) error {
+func (s *Struct) WalkSlice(val reflect.Value, fn WalkFn) error {
 	for i := 0; i < val.Len(); i++ {
 		v := val.Index(i)
 
@@ -84,7 +84,7 @@ func (s *Struct) walkSlice(val reflect.Value, fn WalkFn) error {
 	return nil
 }
 
-func isSubStruct(val reflect.Value) bool {
+func IsSubStruct(val reflect.Value) bool {
 	v := reflect.ValueOf(val.Interface())
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
@@ -98,7 +98,7 @@ func isSubStruct(val reflect.Value) bool {
 	return false
 }
 
-func isSlice(val reflect.Value) bool {
+func IsSlice(val reflect.Value) bool {
 	v := reflect.ValueOf(val.Interface())
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
