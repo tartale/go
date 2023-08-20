@@ -70,6 +70,10 @@ func (s *Struct) WalkSlice(val reflect.Value, fn WalkFn) error {
 	for i := 0; i < val.Len(); i++ {
 		v := val.Index(i)
 
+		if v.Kind() == reflect.Ptr {
+			v = v.Elem()
+		}
+
 		if v.CanAddr() {
 			v = v.Addr()
 		}
