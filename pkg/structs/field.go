@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 var (
@@ -23,6 +24,14 @@ type Field struct {
 // such key in the tag, Tag returns the empty string.
 func (f *Field) Tag(key string) string {
 	return f.field.Tag.Get(key)
+}
+
+// TagRoot returns the initial component of the value associated with key
+// in the tag string. Returns the empty string if there is no such key.
+func (f *Field) TagRoot(key string) string {
+
+	tag := f.Tag(key)
+	return strings.Split(tag, ",")[0]
 }
 
 // Value returns the underlying value of the field. It panics if the field
