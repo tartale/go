@@ -84,7 +84,7 @@ func getValues(filter, input any) map[string]any {
 			inputFieldName := inputField.TagRoot("json")
 			inputFieldValue := inputField.Value()
 			inputFieldReflectValue := reflect.ValueOf(inputFieldValue)
-			if inputFieldReflectValue.Type() == typeOfString {
+			if inputFieldReflectValue.Kind() == reflect.String {
 				inputFieldValue = inputFieldReflectValue.Convert(typeOfString).Interface()
 			}
 			values[inputFieldName] = inputFieldValue

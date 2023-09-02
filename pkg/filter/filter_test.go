@@ -9,13 +9,22 @@ import (
 	"github.com/tartale/go/pkg/jsonx"
 )
 
+type ShowKind string
+
+const (
+	MOVIE  ShowKind = "MOVIE"
+	SERIES ShowKind = "SERIES"
+)
+
 type Movie struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	MovieYear   int    `json:"movieYear"`
+	Kind        ShowKind `json:"kind"`
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
+	MovieYear   int      `json:"movieYear"`
 }
 
 type MovieFilter struct {
+	Kind        *Operator      `json:"kind,omitempty"`
 	Title       *Operator      `json:"title,omitempty"`
 	Description *Operator      `json:"description,omitempty"`
 	MovieYear   *Operator      `json:"movieYear,omitempty"`
@@ -27,6 +36,7 @@ var _ = Describe("Filtering", func() {
 
 	Context("for syntactically correct filters", func() {
 		movie := Movie{
+			Kind:        MOVIE,
 			Title:       "Back to the Future",
 			Description: "The time travel adventures of Doc Brown and Marty McFly",
 			MovieYear:   1985,
@@ -47,8 +57,18 @@ var _ = Describe("Filtering", func() {
 				Expect(eval.(bool)).To(Equal(true))
 			},
 
-			Entry("simple filter",
+			Entry("simple enum filter",
+				`[{"kind": {"eq": "MOVIE"}}]`,
+				movie,
+			),
+
+			Entry("simple string filter",
 				`[{"title": {"eq": "Back to the Future"}}]`,
+				movie,
+			),
+
+			Entry("simple number filter",
+				`[{"movieYear": {"eq": 1985}}]`,
 				movie,
 			),
 
@@ -83,8 +103,18 @@ var _ = Describe("Filtering", func() {
 				Expect(eval.(bool)).To(Equal(false))
 			},
 
-			Entry("simple filter",
+			Entry("simple enum filter",
+				`[{"kind": {"eq": "SERIES"}}]`,
+				movie,
+			),
+
+			Entry("simple string filter",
 				`[{"title": {"eq": "The Shawshank Redemption"}}]`,
+				movie,
+			),
+
+			Entry("simple number filter",
+				`[{"movieYear": {"eq": 1955}}]`,
 				movie,
 			),
 
