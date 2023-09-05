@@ -1,4 +1,4 @@
-package jsontime
+package logz
 
 import "fmt"
 

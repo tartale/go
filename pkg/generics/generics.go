@@ -2,6 +2,8 @@ package generics
 
 import (
 	"reflect"
+
+	"github.com/tartale/go/pkg/logz"
 )
 
 func Normalize[T any](val any) *T {
@@ -22,6 +24,8 @@ func Normalize[T any](val any) *T {
 	var zero []T
 	ttype := reflect.TypeOf(zero).Elem()
 	vtype := reflectVal.Type()
+
+	logz.Logger.Debugf("vtype: %s; ttype: %s", vtype.String(), ttype.String())
 
 	// If the types are identical, no normalization needed
 	if vtype == ttype {
