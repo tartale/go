@@ -44,3 +44,10 @@ func TestNormalizeHandlesIncompatibleTypes(t *testing.T) {
 	var testStruct TestStruct
 	assert.Nil(t, Normalize[int](testStruct))
 }
+
+func TestNormalizeHandlesSlices(t *testing.T) {
+
+	var testStructs []*TestStruct
+	testStructs = append(testStructs, &TestStruct{})
+	assert.Equal(t, &testStructs, Normalize[[]*TestStruct](testStructs))
+}
