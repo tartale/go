@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/tartale/go/pkg/generics"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -20,7 +21,7 @@ func GetArgValue[T any](ctx context.Context, path string, argName string) *T {
 		return nil
 	}
 
-	return val.(*T)
+	return generics.Normalize[T](val)
 }
 
 func GetArgList(ctx context.Context, path string) ast.ArgumentList {
