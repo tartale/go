@@ -6,6 +6,8 @@ import (
 	"github.com/tartale/go/pkg/logz"
 )
 
+var Logger = logz.Logger()
+
 func Normalize[T any](val any) *T {
 
 	if val == nil {
@@ -25,7 +27,7 @@ func Normalize[T any](val any) *T {
 	ttype := reflect.TypeOf(zero).Elem()
 	vtype := reflectVal.Type()
 
-	logz.Logger.Debugf("vtype: %s; ttype: %s", vtype.String(), ttype.String())
+	Logger.Debugf("vtype: %s; ttype: %s", vtype.String(), ttype.String())
 
 	// If the types are identical, no normalization needed
 	if vtype == ttype {

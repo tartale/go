@@ -10,7 +10,10 @@ import (
 	"github.com/tartale/go/pkg/structs"
 )
 
-var DefaultFormat = time.RFC3339
+var (
+	Logger        = logz.Logger()
+	DefaultFormat = time.RFC3339
+)
 
 /*
 Time allows marshal/unmarshal of a time field using a custom format.
@@ -90,7 +93,7 @@ func marshalTime(v any) {
 			newRawValue := val.Time.Format(format)
 			raw := value.FieldByName("Raw")
 			raw.SetString(newRawValue)
-			logz.Logger.Debugf("marshaled json time field; name: %s, rawValue: %s\n", field.Name, newRawValue)
+			Logger.Debugf("marshaled json time field; name: %s, rawValue: %s\n", field.Name, newRawValue)
 		}
 
 		return nil
@@ -113,7 +116,7 @@ func unmarshalTime(v any) {
 			}
 			t := value.FieldByName("Time")
 			t.Set(reflect.ValueOf(newTime))
-			logz.Logger.Debugf("unmarshaled json time field; name: %s, newTime: %s\n", field.Name, newTime)
+			Logger.Debugf("unmarshaled json time field; name: %s, newTime: %s\n", field.Name, newTime)
 		}
 
 		return nil
