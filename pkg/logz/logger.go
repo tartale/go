@@ -2,42 +2,53 @@ package logz
 
 import (
 	"fmt"
-	"runtime"
-	"strings"
 
 	"github.com/puzpuzpuz/xsync"
+	"github.com/tartale/go/pkg/reflectx"
 )
 
 var (
-	loggerMap = xsync.NewMapOf[logger]()
+	loggerMap = xsync.NewMapOf[Interface]()
 )
 
-type logger interface {
+type Interface interface {
 	Debugf(msg string, args ...interface{})
 }
 
-type defaultLogger struct{}
+type DefaultLogger struct {
+	Name string
+}
 
-func (l defaultLogger) Debugf(msg string, args ...interface{}) {
+func (l DefaultLogger) Debugf(msg string, args ...interface{}) {
 	fmt.Printf(msg, args...)
 }
 
-func SetLogger(packageName string, l logger) {
-	loggerMap.Store(packageName, l)
+func Logger() Interface {
+	packagePath := reflectx.CallerPackagePath(2)
+	return LoggerForName(packagePath)
 }
 
-func LoggerForPackage(packageName string) logger {
-	l, _ := loggerMap.LoadOrStore(packageName, defaultLogger{})
+func LoggerForName(name string) Interface {
+	l, _ := loggerMap.LoadOrStore(name, DefaultLogger{Name: name})
 	return l
 }
 
-func Logger() logger {
-	if pc, _, _, ok := runtime.Caller(0); ok {
-		if fn := runtime.FuncForPC(pc); fn != nil {
-			packageName := strings.Split(fn.Name(), ".")[0]
-			return LoggerForPackage(packageName)
-		}
-	}
+func LoggerForObjectTypePackagePath(obj any) Interface {
+	objPackagePath := reflectx.ObjectTypePackagePath(obj)
+	l, _ := loggerMap.LoadOrStore(objPackagePath, DefaultLogger{Name: objPackagePath})
+	return l
+}
 
-	return defaultLogger{}
+func SetLoggerForName(name string, l Interface) {
+	loggerMap.Store(name, l)
+}
+
+func SetLoggerForCallerPackagePath(l Interface) {
+	callerPackagePath := reflectx.CallerPackagePath(2)
+	loggerMap.Store(callerPackagePath, l)
+}
+
+func SetLoggerForObjectTypePackagePath(obj any, l Interface) {
+	objectTypePackagePath := reflectx.ObjectTypePackagePath(obj)
+	loggerMap.Store(objectTypePackagePath, l)
 }
