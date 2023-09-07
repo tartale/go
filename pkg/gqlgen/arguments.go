@@ -2,6 +2,7 @@ package gqlgen
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -18,9 +19,7 @@ func (a ArgKey) String() string {
 	return fmt.Sprintf("%s.%s", a.Path, a.Name)
 }
 
-func ErrNotFound(key ArgKey) error {
-	return fmt.Errorf("not found: %s", key)
-}
+var ErrNotFound = errors.New("not found")
 
 func GetArgValue[T any](ctx context.Context, key ArgKey) *T {
 
@@ -33,7 +32,8 @@ func GetArgValueE[T any](ctx context.Context, key ArgKey) (*T, error) {
 	argumentList := GetArgList(ctx, key.Path)
 	arg := argumentList.ForName(key.Name)
 	if arg == nil {
-		return nil, ErrNotFound(key)
+		return nil, fmt.Errorf("%w: %s", ErrNotFound, key)
+
 	}
 	val, err := arg.Value.Value(nil)
 	if err != nil {
