@@ -1,17 +1,34 @@
 package generics
 
 import (
+	"errors"
+	"fmt"
 	"reflect"
 
-	"github.com/tartale/go/pkg/logz"
+	"github.com/mitchellh/mapstructure"
 )
 
-var Logger = logz.Logger()
+var ErrInvalidType = errors.New("invalid type")
 
-func Normalize[T any](val any) *T {
+func Cast[T any](val any) *T {
+
+	v, _ := CastE[T](val)
+	return v
+}
+
+func CastE[T any](val any) (*T, error) {
 
 	if val == nil {
-		return nil
+		return nil, nil
+	}
+
+	// Try some basic casts first
+	if tval, ok := val.(T); ok {
+		return &tval, nil
+	}
+
+	if tval, ok := val.(*T); ok {
+		return tval, nil
 	}
 
 	reflectVal := reflect.ValueOf(val)
@@ -23,23 +40,24 @@ func Normalize[T any](val any) *T {
 
 	// Get the type of the generic parameter
 	// https://stackoverflow.com/a/73932292/1258206
-	var zero []T
-	ttype := reflect.TypeOf(zero).Elem()
+	var (
+		tval T
+		err  error
+	)
+	ttype := reflect.TypeOf(tval)
 	vtype := reflectVal.Type()
 
-	Logger.Debugf("vtype: %s; ttype: %s", vtype.String(), ttype.String())
-
-	// If the types are identical, no normalization needed
-	if vtype == ttype {
-		tval := reflectVal.Interface().(T)
-		return &tval
-	}
-
-	// Ensure that the requested and actual types are compatable
+	// If the value is convertablie to T, then convert it and return it
 	if vtype.ConvertibleTo(ttype) {
-		tval := reflectVal.Convert(ttype).Interface().(T)
-		return &tval
+		tval = reflectVal.Convert(ttype).Interface().(T)
+		return &tval, nil
 	}
 
-	return nil
+	// If the value can be decoded from a map; then return that
+	err = mapstructure.Decode(reflectVal.Interface(), &tval)
+	if err == nil {
+		return &tval, nil
+	}
+
+	return nil, fmt.Errorf("%w: input type: %s; output type: %s", ErrInvalidType, vtype, ttype)
 }

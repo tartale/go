@@ -9,19 +9,38 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
-func GetArgValue[T any](ctx context.Context, path string, argName string) *T {
+type ArgKey struct {
+	Path string
+	Name string
+}
 
-	argumentList := GetArgList(ctx, path)
-	arg := argumentList.ForName(argName)
+func (a ArgKey) String() string {
+	return fmt.Sprintf("%s.%s", a.Path, a.Name)
+}
+
+func ErrNotFound(key ArgKey) error {
+	return fmt.Errorf("not found: %s", key)
+}
+
+func GetArgValue[T any](ctx context.Context, key ArgKey) *T {
+
+	val, _ := GetArgValueE[T](ctx, key)
+	return val
+}
+
+func GetArgValueE[T any](ctx context.Context, key ArgKey) (*T, error) {
+
+	argumentList := GetArgList(ctx, key.Path)
+	arg := argumentList.ForName(key.Name)
 	if arg == nil {
-		return nil
+		return nil, ErrNotFound(key)
 	}
 	val, err := arg.Value.Value(nil)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	return generics.Normalize[T](val)
+	return generics.CastE[T](val)
 }
 
 func GetArgList(ctx context.Context, path string) ast.ArgumentList {

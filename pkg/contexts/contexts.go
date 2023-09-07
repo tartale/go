@@ -2,17 +2,21 @@ package contexts
 
 import (
 	"context"
-	"reflect"
+
+	"github.com/tartale/go/pkg/generics"
 )
 
 func Value[T any](ctx context.Context, key any) *T {
+
+	val, _ := ValueE[T](ctx, key)
+	return val
+}
+
+func ValueE[T any](ctx context.Context, key any) (*T, error) {
+
 	if val := ctx.Value(key); val != nil {
-		if reflect.ValueOf(val).Kind() == reflect.Ptr {
-			return val.(*T)
-		}
-		v := val.(T)
-		return &v
+		return generics.CastE[T](val)
 	}
 
-	return nil
+	return nil, nil
 }
