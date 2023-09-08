@@ -15,11 +15,13 @@ type ArgKey struct {
 	Name string
 }
 
+var ErrNotFound = errors.New("not found")
+var ErrFieldNotFound = fmt.Errorf("%w: field", ErrNotFound)
+var ErrArgumentNotFound = fmt.Errorf("%w: argument", ErrNotFound)
+
 func (a ArgKey) String() string {
 	return fmt.Sprintf("%s.%s", a.Path, a.Name)
 }
-
-var ErrNotFound = errors.New("not found")
 
 func GetArgValue[T any](ctx context.Context, key ArgKey) *T {
 
@@ -29,11 +31,13 @@ func GetArgValue[T any](ctx context.Context, key ArgKey) *T {
 
 func GetArgValueE[T any](ctx context.Context, key ArgKey) (*T, error) {
 
-	argumentList := GetArgList(ctx, key.Path)
+	argumentList, err := GetArgList(ctx, key.Path)
+	if err != nil {
+		return nil, err
+	}
 	arg := argumentList.ForName(key.Name)
 	if arg == nil {
-		return nil, fmt.Errorf("%w: %s", ErrNotFound, key)
-
+		return nil, fmt.Errorf("%w '%s'", ErrArgumentNotFound, key)
 	}
 	val, err := arg.Value.Value(nil)
 	if err != nil {
@@ -43,15 +47,15 @@ func GetArgValueE[T any](ctx context.Context, key ArgKey) (*T, error) {
 	return generics.CastE[T](val)
 }
 
-func GetArgList(ctx context.Context, path string) ast.ArgumentList {
+func GetArgList(ctx context.Context, path string) (ast.ArgumentList, error) {
 
 	fctx := graphql.GetFieldContext(ctx)
 	field := FindField(ctx, path, fctx)
 	if field == nil {
-		return nil
+		return nil, fmt.Errorf("%w '%s'", ErrFieldNotFound, path)
 	}
 
-	return field.Arguments
+	return field.Arguments, nil
 }
 
 func FindField(ctx context.Context, path string, fctx *graphql.FieldContext) *graphql.CollectedField {
