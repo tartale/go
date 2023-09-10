@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+
+	"golang.org/x/exp/slices"
 )
 
 var (
@@ -20,10 +22,35 @@ type Field struct {
 	defaultTag string
 }
 
+func NewField(f reflect.StructField, v reflect.Value) *Field {
+	return &Field{
+		value:      v,
+		field:      f,
+		defaultTag: DefaultTagName,
+	}
+}
+
 // Tag returns the value associated with key in the tag string. If there is no
 // such key in the tag, Tag returns the empty string.
 func (f *Field) Tag(key string) string {
 	return f.field.Tag.Get(key)
+}
+
+// TagElement returns the element of the tag named by key; If there is no
+// such key or element in the tag, TagElement returns the empty string.
+// Examples:
+//
+//	tag: `json:"foo",omitempty` TagElement("json", "omitempty") == "omitempty"
+//	tag: `json:"foo",omitempty` TagElement("json", "omitempty") == ""
+func (f *Field) TagElement(key, elem string) string {
+	tag := f.Tag(key)
+	elements := strings.Split(tag, ",")
+	index := slices.Index(elements, elem)
+	if index < 0 {
+		return ""
+	}
+
+	return elements[index]
 }
 
 // TagRoot returns the initial component of the value associated with key

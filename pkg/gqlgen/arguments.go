@@ -2,10 +2,10 @@ package gqlgen
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/tartale/go/pkg/errorz"
 	"github.com/tartale/go/pkg/generics"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -15,21 +15,23 @@ type ArgKey struct {
 	Name string
 }
 
-var ErrNotFound = errors.New("not found")
-var ErrFieldNotFound = fmt.Errorf("%w: field", ErrNotFound)
-var ErrArgumentNotFound = fmt.Errorf("%w: argument", ErrNotFound)
+var ErrFieldNotFound = fmt.Errorf("%w: field", errorz.ErrNotFound)
+var ErrArgumentNotFound = fmt.Errorf("%w: argument", errorz.ErrNotFound)
 
 func (a ArgKey) String() string {
 	return fmt.Sprintf("%s.%s", a.Path, a.Name)
 }
 
-func GetArgValue[T any](ctx context.Context, key ArgKey) *T {
+func MustGetArgValue[T any](ctx context.Context, key ArgKey) *T {
 
-	val, _ := GetArgValueE[T](ctx, key)
+	val, err := GetArgValue[T](ctx, key)
+	if err != nil {
+		panic(err)
+	}
 	return val
 }
 
-func GetArgValueE[T any](ctx context.Context, key ArgKey) (*T, error) {
+func GetArgValue[T any](ctx context.Context, key ArgKey) (*T, error) {
 
 	argumentList, err := GetArgList(ctx, key.Path)
 	if err != nil {
@@ -44,7 +46,7 @@ func GetArgValueE[T any](ctx context.Context, key ArgKey) (*T, error) {
 		return nil, err
 	}
 
-	return generics.CastE[T](val)
+	return generics.CastTo[T](val)
 }
 
 func GetArgList(ctx context.Context, path string) (ast.ArgumentList, error) {

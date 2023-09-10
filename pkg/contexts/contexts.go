@@ -15,7 +15,7 @@ func Value[T any](ctx context.Context, key any) *T {
 func ValueE[T any](ctx context.Context, key any) (*T, error) {
 
 	if val := ctx.Value(key); val != nil {
-		return generics.CastE[T](val)
+		return generics.CastTo[T](val)
 	}
 
 	return nil, nil
