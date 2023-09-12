@@ -10,18 +10,32 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
+// ArgKey is an object that must be
+// provided when attempting to get an argument
+// from a gqlgen context. The path represents
+// the JSON path into the query, while the name
+// identifies the argument.
 type ArgKey struct {
 	Path string
 	Name string
 }
 
+// ErrFieldNotFound is returned when no field can be located in
+// the gqlgen context at the given path.
 var ErrFieldNotFound = fmt.Errorf("%w: field", errorz.ErrNotFound)
+
+// ErrArgumentNotFound is returned when no argument with the given
+// name can be located in gqlgen field at the given path. This
+// error could indicated that an optional argument was simply not
+// provided in the GraphQL query itself.
 var ErrArgumentNotFound = fmt.Errorf("%w: argument", errorz.ErrNotFound)
 
 func (a ArgKey) String() string {
 	return fmt.Sprintf("%s.%s", a.Path, a.Name)
 }
 
+// MustGetArgValue is a convenience function that wraps GetArgValue,
+// but panics if an error occurs.
 func MustGetArgValue[T any](ctx context.Context, key ArgKey) *T {
 
 	val, err := GetArgValue[T](ctx, key)
@@ -31,6 +45,14 @@ func MustGetArgValue[T any](ctx context.Context, key ArgKey) *T {
 	return val
 }
 
+// GetArgValue searches the gqlgen context for a query argument
+// identified by path and name in the ArgKey, and returns
+// the value casted to the given type T. GetArgValue returns an
+// error if:
+//   - The context is not a gqlgen-provided context
+//   - The field specified by the path is not found in the query
+//   - The argument is not provided in the identified query field
+//   - The value of the argument cannot be cast to the desired type.
 func GetArgValue[T any](ctx context.Context, key ArgKey) (*T, error) {
 
 	argumentList, err := GetArgList(ctx, key.Path)
@@ -49,6 +71,8 @@ func GetArgValue[T any](ctx context.Context, key ArgKey) (*T, error) {
 	return generics.CastTo[T](val)
 }
 
+// GetArgList searches the gqlgen context for a query field
+// identified by path and returns the list of arguments passed to the query.
 func GetArgList(ctx context.Context, path string) (ast.ArgumentList, error) {
 
 	fctx := graphql.GetFieldContext(ctx)
@@ -60,6 +84,8 @@ func GetArgList(ctx context.Context, path string) (ast.ArgumentList, error) {
 	return field.Arguments, nil
 }
 
+// FindField does a depth-first search of the gqlgen context for the
+// field identified by path.
 func FindField(ctx context.Context, path string, fctx *graphql.FieldContext) *graphql.CollectedField {
 
 	if !graphql.HasOperationContext(ctx) {

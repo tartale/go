@@ -10,8 +10,12 @@ import (
 	"github.com/tartale/go/pkg/reflectx"
 )
 
+// ErrNotCasted is returned when a given value is
+// unable to be cast to the desired type.
 var ErrNotCasted = errors.New("unable to cast value")
 
+// MustCastTo is a convenience function that wraps
+// CastTo, but panics if an error occurs.
 func MustCastTo[T any](val any) *T {
 
 	v, err := CastTo[T](val)
@@ -21,6 +25,11 @@ func MustCastTo[T any](val any) *T {
 	return v
 }
 
+// CastTo takes a value of any type and attempts several
+// methods to cast it to type T in an expected way, using reflection
+// if necessary. CastTo returns the cast value, and the
+// type T cannot be automatically inferred. If inference is
+// desired, use Cast.
 func CastTo[T any](val any) (*T, error) {
 
 	if val == nil {
@@ -82,6 +91,8 @@ func CastTo[T any](val any) (*T, error) {
 	return nil, fmt.Errorf("%w: input type: %s; output type: %s", ErrNotCasted, vtype, rtype)
 }
 
+// MustCast is a convenience function that wraps
+// Cast, but panics if an error occurs.
 func MustCast[T any](val T, dest *T) error {
 
 	newVal := MustCastTo[T](val)
@@ -91,9 +102,12 @@ func MustCast[T any](val T, dest *T) error {
 	return nil
 }
 
+// Cast works similarly to the CastTo function, except
+// that the caller provides a pointer to destination variable,
+// instead of getting it through a return value. This allows
+// type inference.
 func Cast[T any](val any, dest *T) error {
 
-	fmt.Printf("%T\n", dest)
 	newVal, err := CastTo[T](val)
 	if err != nil {
 		return err
