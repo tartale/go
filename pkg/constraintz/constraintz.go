@@ -7,5 +7,5 @@ type Primitive interface {
 }
 
 type Number interface {
-	constraints.Float | constraints.Integer | constraints.Complex
+	constraints.Float | constraints.Integer
 }

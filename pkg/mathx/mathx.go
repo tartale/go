@@ -1,6 +1,8 @@
 package mathx
 
 import (
+	"math"
+
 	"golang.org/x/exp/constraints"
 )
 
@@ -24,4 +26,11 @@ func Min[T constraints.Ordered](a, b T) T {
 		return a
 	}
 	return b
+}
+
+func DivideAndRound[N constraints.Integer](a, b N) N {
+	dividend := float64(a)
+	divisor := float64(b)
+
+	return N(math.Round(dividend / divisor))
 }
