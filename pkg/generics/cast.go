@@ -1,6 +1,7 @@
 package generics
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -51,6 +52,7 @@ func CastTo[T any](val any) (*T, error) {
 	if vval.Kind() == reflect.Ptr {
 		vval = vval.Elem()
 	}
+	val = vval.Interface()
 
 	var (
 		result T
@@ -84,6 +86,13 @@ func CastTo[T any](val any) (*T, error) {
 
 	// If the value can be decoded from a map; then return that
 	err = mapstructure.Decode(vval.Interface(), &result)
+	if err == nil {
+		return &result, nil
+	}
+
+	// Try to encode as JSON, and then decode
+	jsonBytes, _ := json.Marshal(vval.Interface())
+	err = json.Unmarshal(jsonBytes, &result)
 	if err == nil {
 		return &result, nil
 	}

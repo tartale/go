@@ -39,7 +39,7 @@ func TestMarshalTime(t *testing.T) {
 	testStruct := TestStruct{}
 	testStruct.Bar = *jsonTime
 
-	marshalTime(&testStruct)
+	MarshalTime(&testStruct)
 
 	assert.Equal(t, "1976-07-31", testStruct.Bar.Raw)
 }
@@ -51,7 +51,7 @@ func TestMarshalTime_NestedStruct(t *testing.T) {
 	testStruct := TestNestedStruct{}
 	testStruct.Nested.Bar = *jsonTime
 
-	marshalTime(&testStruct)
+	MarshalTime(&testStruct)
 
 	assert.Equal(t, "1976-07-31", testStruct.Nested.Bar.Raw)
 }
@@ -63,7 +63,7 @@ func TestMarshalTime_AnyField(t *testing.T) {
 	testStruct := TestStructWithAnyField{}
 	testStruct.Nested.Bar = *jsonTime
 
-	marshalTime(&testStruct)
+	MarshalTime(&testStruct)
 	assert.Equal(t, "1976-07-31", testStruct.Nested.Bar.Raw)
 }
 
@@ -76,7 +76,7 @@ func TestMarshalTime_NestedAnyField(t *testing.T) {
 	nestedStruct.Bar = *jsonTime
 	testStruct := TestStructWithNestedAnyField{Nested: &nestedStruct}
 
-	marshalTime(&testStruct)
+	MarshalTime(&testStruct)
 
 	assert.Equal(t, "1976-07-31", testStruct.Nested.(*TestStruct).Bar.Raw)
 }
@@ -90,7 +90,7 @@ func TestMarshalTime_SliceField(t *testing.T) {
 	testStruct := TestStructWithSliceField{}
 	testStruct.Slice = append(testStruct.Slice, item)
 
-	marshalTime(&testStruct)
+	MarshalTime(&testStruct)
 
 	assert.Len(t, testStruct.Slice, 1)
 	assert.Equal(t, "1976-07-31", testStruct.Slice[0].Bar.Raw)
@@ -101,7 +101,7 @@ func TestUnmarshalTime(t *testing.T) {
 	testStruct := TestStruct{}
 	testStruct.Bar.Raw = "1976-07-31"
 
-	unmarshalTime(&testStruct)
+	UnmarshalTime(&testStruct)
 
 	assert.Equal(t, 1976, testStruct.Bar.Time.Year())
 	assert.Equal(t, time.Month(7), testStruct.Bar.Time.Month())
@@ -113,7 +113,7 @@ func TestUnmarshalTime_NestedStruct(t *testing.T) {
 	testStruct := TestNestedStruct{}
 	testStruct.Nested.Bar.Raw = "1976-07-31"
 
-	unmarshalTime(&testStruct)
+	UnmarshalTime(&testStruct)
 
 	assert.Equal(t, 1976, testStruct.Nested.Bar.Time.Year())
 	assert.Equal(t, time.Month(7), testStruct.Nested.Bar.Time.Month())
@@ -125,7 +125,7 @@ func TestUnmarshalTime_AnyField(t *testing.T) {
 	testStruct := TestStructWithAnyField{}
 	testStruct.Nested.Bar.Raw = "1976-07-31"
 
-	unmarshalTime(&testStruct)
+	UnmarshalTime(&testStruct)
 
 	assert.Equal(t, 1976, testStruct.Nested.Bar.Time.Year())
 	assert.Equal(t, time.Month(7), testStruct.Nested.Bar.Time.Month())
@@ -139,7 +139,7 @@ func TestUnmarshalTime_NestedAnyField(t *testing.T) {
 	nestedStruct.Bar.Raw = "1976-07-31"
 	testStruct.Nested = &nestedStruct
 
-	unmarshalTime(&testStruct)
+	UnmarshalTime(&testStruct)
 
 	newNestedStruct := testStruct.Nested.(*TestStruct)
 	assert.Equal(t, 1976, newNestedStruct.Bar.Time.Year())

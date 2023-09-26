@@ -17,6 +17,7 @@ var testStruct TestStruct
 
 type TestLogger struct{}
 
+func (tl TestLogger) Infof(msg string, args ...interface{})  {}
 func (tl TestLogger) Debugf(msg string, args ...interface{}) {}
 
 var testLogger TestLogger

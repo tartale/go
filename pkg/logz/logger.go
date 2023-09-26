@@ -12,11 +12,16 @@ var (
 )
 
 type Interface interface {
+	Infof(msg string, args ...interface{})
 	Debugf(msg string, args ...interface{})
 }
 
 type DefaultLogger struct {
 	Name string
+}
+
+func (l DefaultLogger) Infof(msg string, args ...interface{}) {
+	fmt.Printf(msg, args...)
 }
 
 func (l DefaultLogger) Debugf(msg string, args ...interface{}) {

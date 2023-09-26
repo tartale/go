@@ -61,13 +61,13 @@ func (t *Time) UnmarshalJSON(data []byte) error {
 
 func MarshalJSONIndent(v any, prefix, indent string) ([]byte, error) {
 
-	marshalTime(v)
+	MarshalTime(v)
 	return json.MarshalIndent(v, prefix, indent)
 }
 
 func MarshalJSON(v any) ([]byte, error) {
 
-	marshalTime(v)
+	MarshalTime(v)
 	return json.Marshal(v)
 }
 
@@ -77,12 +77,12 @@ func UnmarshalJSON(data []byte, v any) error {
 	if err != nil {
 		return err
 	}
-	unmarshalTime(v)
+	UnmarshalTime(v)
 
 	return nil
 }
 
-func marshalTime(v any) {
+func MarshalTime(v any) {
 
 	walkFn := func(field reflect.StructField, value reflect.Value) error {
 
@@ -101,7 +101,7 @@ func marshalTime(v any) {
 	structs.Walk(v, walkFn)
 }
 
-func unmarshalTime(v any) {
+func UnmarshalTime(v any) {
 
 	walkFn := func(field reflect.StructField, value reflect.Value) error {
 
