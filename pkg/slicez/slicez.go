@@ -46,3 +46,13 @@ func Map[In, Out any](inputSlice []In, fn func(index int, inputValue In) Out) (o
 
 	return outputSlice
 }
+
+func Fill[T any](t T, n int) []T {
+
+	result := make([]T, n)
+	for i := 0; i < n; i++ {
+		result[i] = t
+	}
+
+	return result
+}

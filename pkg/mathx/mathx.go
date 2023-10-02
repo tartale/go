@@ -37,9 +37,18 @@ func Ceil[N constraintz.Number](a N) int {
 	return int(math.Ceil(float64(a)))
 }
 
-func DivideAndRound[N constraints.Integer](a, b N) N {
+func DivideTo[IN1, IN2, OUT constraintz.Number](a IN1, b IN2, ops ...func(float64) float64) OUT {
 	dividend := float64(a)
 	divisor := float64(b)
+	result := dividend / divisor
+	for _, op := range ops {
+		result = op(result)
+	}
 
-	return N(math.Round(dividend / divisor))
+	return OUT(result)
+}
+
+func Divide[IN1, IN2, OUT constraintz.Number](a IN1, b IN2, result *OUT, ops ...func(float64) float64) {
+
+	*result = DivideTo[IN1, IN2, OUT](a, b, ops...)
 }
