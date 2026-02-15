@@ -32,110 +32,49 @@ func New(s interface{}) *Struct {
 	}
 }
 
-// WalkFn is a callback that can be used in the Walk method, below.
-// While iterating the struct's fields, the callback will be invoked
-// for every field/value pair.  If the callback function returns
-// an error, the iterating is aborted and the error returned from
-// the Walk function itself.
-type WalkFn func(field reflect.StructField, value reflect.Value) error
-
-// Walk iterates the struct's fields using depth-first search, calling the given
-// callback function.  It panics if s's kind is not struct.  Supports
-// the 'omitnested' and 'flatten' tags on nested struct fields.
-// If 'omitnested' is present, the Walk callback will be invoked for the
-// nested struct field itself, but not for the nested struct's fields.
-// If 'flatten' is present, the Walk callback will be invoked for the
-// nested struct's fields, but not for the top-level nested struct itself.
-func (s *Struct) Walk(fn WalkFn) error {
-	fields := s.structFields()
-
-	for _, field := range fields {
-		name := field.Name
-		val := s.value.FieldByName(name)
-		isSubStruct := false
-
-		tagName, tagOpts := parseTag(field.Tag.Get(s.TagName))
-		if tagName != "" {
-			name = tagName
-		}
-
-		if !tagOpts.Has("omitnested") {
-			v := reflect.ValueOf(val.Interface())
-			if v.Kind() == reflect.Ptr {
-				v = v.Elem()
-			}
-
-			switch v.Kind() {
-			case reflect.Struct:
-				isSubStruct = true
-			}
-		}
-
-		if isSubStruct {
-			if !tagOpts.Has("flatten") {
-				err := fn(field, val)
-				if err != nil {
-					return err
-				}
-			}
-			err := New(val.Interface()).Walk(fn)
-			if err != nil {
-				return err
-			}
-		} else {
-			err := fn(field, val)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
 // Map converts the given struct to a map[string]interface{}, where the keys
 // of the map are the field names and the values of the map the associated
 // values of the fields. The default key string is the struct field name but
 // can be changed in the struct field's tag value. The "structs" key in the
 // struct's field tag value is the key name. Example:
 //
-//   // Field appears in map as key "myName".
-//   Name string `structs:"myName"`
+//	// Field appears in map as key "myName".
+//	Name string `structs:"myName"`
 //
 // A tag value with the content of "-" ignores that particular field. Example:
 //
-//   // Field is ignored by this package.
-//   Field bool `structs:"-"`
+//	// Field is ignored by this package.
+//	Field bool `structs:"-"`
 //
 // A tag value with the content of "string" uses the stringer to get the value. Example:
 //
-//   // The value will be output of Animal's String() func.
-//   // Map will panic if Animal does not implement String().
-//   Field *Animal `structs:"field,string"`
+//	// The value will be output of Animal's String() func.
+//	// Map will panic if Animal does not implement String().
+//	Field *Animal `structs:"field,string"`
 //
 // A tag value with the option of "flatten" used in a struct field is to flatten its fields
 // in the output map. Example:
 //
-//   // The FieldStruct's fields will be flattened into the output map.
-//   FieldStruct time.Time `structs:",flatten"`
+//	// The FieldStruct's fields will be flattened into the output map.
+//	FieldStruct time.Time `structs:",flatten"`
 //
 // A tag value with the option of "omitnested" stops iterating further if the type
 // is a struct. Example:
 //
-//   // Field is not processed further by this package.
-//   Field time.Time     `structs:"myName,omitnested"`
-//   Field *http.Request `structs:",omitnested"`
+//	// Field is not processed further by this package.
+//	Field time.Time     `structs:"myName,omitnested"`
+//	Field *http.Request `structs:",omitnested"`
 //
 // A tag value with the option of "omitempty" ignores that particular field if
 // the field value is empty. Example:
 //
-//   // Field appears in map as key "myName", but the field is
-//   // skipped if empty.
-//   Field string `structs:"myName,omitempty"`
+//	// Field appears in map as key "myName", but the field is
+//	// skipped if empty.
+//	Field string `structs:"myName,omitempty"`
 //
-//   // Field appears in map as key "Field" (the default), but
-//   // the field is skipped if empty.
-//   Field string `structs:",omitempty"`
+//	// Field appears in map as key "Field" (the default), but
+//	// the field is skipped if empty.
+//	Field string `structs:",omitempty"`
 //
 // Note that only exported fields of a struct can be accessed, non exported
 // fields will be neglected.
@@ -214,21 +153,21 @@ func (s *Struct) FillMap(out map[string]interface{}) {
 // struct tag with the content of "-" ignores the that particular field.
 // Example:
 //
-//   // Field is ignored by this package.
-//   Field int `structs:"-"`
+//	// Field is ignored by this package.
+//	Field int `structs:"-"`
 //
 // A value with the option of "omitnested" stops iterating further if the type
 // is a struct. Example:
 //
-//   // Fields is not processed further by this package.
-//   Field time.Time     `structs:",omitnested"`
-//   Field *http.Request `structs:",omitnested"`
+//	// Fields is not processed further by this package.
+//	Field time.Time     `structs:",omitnested"`
+//	Field *http.Request `structs:",omitnested"`
 //
 // A tag value with the option of "omitempty" ignores that particular field and
 // is not added to the values if the field value is empty. Example:
 //
-//   // Field is skipped if empty
-//   Field string `structs:",omitempty"`
+//	// Field is skipped if empty
+//	Field string `structs:",omitempty"`
 //
 // Note that only exported fields of a struct can be accessed, non exported
 // fields  will be neglected.
@@ -276,8 +215,8 @@ func (s *Struct) Values() []interface{} {
 // Fields returns a slice of Fields. A struct tag with the content of "-"
 // ignores the checking of that particular field. Example:
 //
-//   // Field is ignored by this package.
-//   Field bool `structs:"-"`
+//	// Field is ignored by this package.
+//	Field bool `structs:"-"`
 //
 // It panics if s's kind is not struct.
 func (s *Struct) Fields() []*Field {
@@ -287,8 +226,8 @@ func (s *Struct) Fields() []*Field {
 // Names returns a slice of field names. A struct tag with the content of "-"
 // ignores the checking of that particular field. Example:
 //
-//   // Field is ignored by this package.
-//   Field bool `structs:"-"`
+//	// Field is ignored by this package.
+//	Field bool `structs:"-"`
 //
 // It panics if s's kind is not struct.
 func (s *Struct) Names() []string {
@@ -364,15 +303,15 @@ func (s *Struct) FieldOk(name string) (*Field, bool) {
 // initialized) A struct tag with the content of "-" ignores the checking of
 // that particular field. Example:
 //
-//   // Field is ignored by this package.
-//   Field bool `structs:"-"`
+//	// Field is ignored by this package.
+//	Field bool `structs:"-"`
 //
 // A value with the option of "omitnested" stops iterating further if the type
 // is a struct. Example:
 //
-//   // Field is not processed further by this package.
-//   Field time.Time     `structs:"myName,omitnested"`
-//   Field *http.Request `structs:",omitnested"`
+//	// Field is not processed further by this package.
+//	Field time.Time     `structs:"myName,omitnested"`
+//	Field *http.Request `structs:",omitnested"`
 //
 // Note that only exported fields of a struct can be accessed, non exported
 // fields  will be neglected. It panics if s's kind is not struct.
@@ -411,15 +350,15 @@ func (s *Struct) IsZero() bool {
 // A struct tag with the content of "-" ignores the checking of that particular
 // field. Example:
 //
-//   // Field is ignored by this package.
-//   Field bool `structs:"-"`
+//	// Field is ignored by this package.
+//	Field bool `structs:"-"`
 //
 // A value with the option of "omitnested" stops iterating further if the type
 // is a struct. Example:
 //
-//   // Field is not processed further by this package.
-//   Field time.Time     `structs:"myName,omitnested"`
-//   Field *http.Request `structs:",omitnested"`
+//	// Field is not processed further by this package.
+//	Field time.Time     `structs:"myName,omitnested"`
+//	Field *http.Request `structs:",omitnested"`
 //
 // Note that only exported fields of a struct can be accessed, non exported
 // fields  will be neglected. It panics if s's kind is not struct.
@@ -464,6 +403,8 @@ func (s *Struct) Name() string {
 // is a convenient helper method to avoid duplicate code in some of the
 // functions.
 func (s *Struct) structFields() []reflect.StructField {
+	name := s.Name()
+	_ = name
 	t := s.value.Type()
 
 	var f []reflect.StructField
@@ -489,22 +430,21 @@ func (s *Struct) structFields() []reflect.StructField {
 func strctVal(s interface{}) reflect.Value {
 	v := reflect.ValueOf(s)
 
-	// if pointer get the underlying element≤
-	for v.Kind() == reflect.Ptr {
-		v = v.Elem()
+	// if pointer or interface get the underlying element≤
+	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
+		if v.Kind() == reflect.Ptr {
+			v = v.Elem()
+		}
+		if v.Kind() == reflect.Interface {
+			v = reflect.ValueOf(v.Interface())
+		}
 	}
 
 	if v.Kind() != reflect.Struct {
-		panic("not struct")
+		panic(fmt.Sprintf("not struct: %s", v.Kind()))
 	}
 
 	return v
-}
-
-// Walk iterates the struct's fields using depth-first search, calling the given
-// callback function.  It panics if s's kind is not struct.
-func Walk(s interface{}, fn WalkFn) error {
-	return New(s).Walk(fn)
 }
 
 // Map converts the given struct to a map[string]interface{}. For more info
