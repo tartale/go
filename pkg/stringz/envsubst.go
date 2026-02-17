@@ -10,8 +10,21 @@ import (
 	"github.com/tartale/go/pkg/reflectx"
 )
 
+// Envsubst expands environment variables in the string pointed to by val.
+//
+// The argument must be a non-nil pointer to a string-like value; otherwise
+// an error is returned. On success, the pointed-to value is replaced with
+// the expanded string.
+//
+// Example:
+//
+//	s := "hello ${WORLD}"
+//	os.Setenv("WORLD", "earth")
+//	if err := stringz.Envsubst(&s); err != nil {
+//		log.Fatal(err)
+//	}
+//	// s == "hello earth"
 func Envsubst(val any) error {
-
 	if val == nil {
 		return fmt.Errorf("%w: argument is nil", errorz.ErrInvalidArgument)
 	}
@@ -42,5 +55,4 @@ func Envsubst(val any) error {
 	vval.Set(rval)
 
 	return nil
-
 }

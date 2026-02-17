@@ -17,6 +17,12 @@ import (
 // IsDir is a simple convenience function for the
 // os.IsDir() function, which ignores the error and
 // returns false.
+//
+// Example:
+//
+//	if filez.IsDir("/tmp") {
+//		fmt.Println("/tmp is a directory")
+//	}
 func IsDir(name string) bool {
 
 	stat, err := os.Stat(name)
@@ -30,6 +36,12 @@ func IsDir(name string) bool {
 // Exists returns true if the given file or directory
 // exists and is reachable.
 // See https://stackoverflow.com/a/12518877/1258206
+//
+// Example:
+//
+//	if !filez.Exists("config.yaml") {
+//		log.Fatal("config.yaml does not exist")
+//	}
 func Exists(name string) bool {
 
 	if _, err := os.Stat(name); err == nil {
@@ -52,6 +64,7 @@ func Exist(paths ...string) (missingPaths []string) {
 	return missingPaths
 }
 
+// PathWithoutExtension returns path with its file extension removed.
 func PathWithoutExtension(path string) string {
 
 	if path == "" {
@@ -63,6 +76,7 @@ func PathWithoutExtension(path string) string {
 	return path
 }
 
+// NameWithoutExtension returns the base name of path without its extension.
 func NameWithoutExtension(path string) string {
 
 	if path == "" {
@@ -74,6 +88,8 @@ func NameWithoutExtension(path string) string {
 	return name
 }
 
+// MustOpenFile opens name (creating parent directories if needed) and panics
+// on error. The provided flag and perm are currently ignored.
 func MustOpenFile(name string, flag int, perm fs.FileMode) *os.File {
 
 	file, err1 := os.OpenFile(name, os.O_CREATE|os.O_WRONLY, 0644)
@@ -126,6 +142,8 @@ func MustMkdirAll(dir string) {
 	}
 }
 
+// MustRename renames oldpath to newpath, creating parent directories for
+// newpath as needed and panicking on failure.
 func MustRename(oldpath, newpath string) {
 
 	var (
@@ -140,7 +158,7 @@ func MustRename(oldpath, newpath string) {
 	if renameErr == nil {
 		return
 	}
-	if renameErr != nil && !errors.Is(renameErr, os.ErrNotExist) {
+	if !errors.Is(renameErr, os.ErrNotExist) {
 		panic(fmt.Errorf("%w: %w", errorz.ErrFatal, renameErr))
 	}
 	dir := path.Dir(newpath)
@@ -154,6 +172,12 @@ func MustRename(oldpath, newpath string) {
 	}
 }
 
+// MustReadAll reads the entire contents of path, panicking on error.
+//
+// Example:
+//
+//	data := filez.MustReadAll("config.yaml")
+//	fmt.Printf("%s\n", data)
 func MustReadAll(path string) []byte {
 
 	file, err := os.Open(path)
@@ -170,6 +194,8 @@ func MustReadAll(path string) []byte {
 	return bytes
 }
 
+// GetRootDirForCaller returns the root directory of the module containing
+// the caller at the given stack depth, as determined by walking up to a .git directory.
 func GetRootDirForCaller(caller int) (rootDir string, found bool) {
 
 	var (
@@ -183,6 +209,8 @@ func GetRootDirForCaller(caller int) (rootDir string, found bool) {
 	return GetRootDirForFile(file)
 }
 
+// GetRootDirForFile returns the root directory of the module containing file,
+// as determined by walking up the directory tree until a .git directory is found.
 func GetRootDirForFile(file string) (rootDir string, found bool) {
 
 	rootDir = path.Dir(file)
