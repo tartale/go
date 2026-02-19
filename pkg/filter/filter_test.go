@@ -33,7 +33,6 @@ type MovieFilter struct {
 }
 
 var _ = Describe("Filtering", func() {
-
 	Context("for syntactically correct filters", func() {
 		movie := Movie{
 			Kind:        MOVIE,
@@ -44,7 +43,6 @@ var _ = Describe("Filtering", func() {
 
 		DescribeTable("can be evaluated against an input that should return true",
 			func(movieFiltersJson string, movie Movie) {
-
 				var movieFilters []*MovieFilter
 				err := jsonx.StrictUnmarshal([]byte(movieFiltersJson), &movieFilters)
 				Expect(err).ToNot(HaveOccurred())
@@ -90,7 +88,6 @@ var _ = Describe("Filtering", func() {
 
 		DescribeTable("can be evaluated against an input that should return false",
 			func(movieFiltersJson string, movie Movie) {
-
 				var movieFilters []*MovieFilter
 				err := json.Unmarshal([]byte(movieFiltersJson), &movieFilters)
 				Expect(err).ToNot(HaveOccurred())

@@ -26,8 +26,11 @@ type Operator struct {
 	Matches any `json:"matches,omitempty"`
 }
 
+// GetExpression takes a filter object (i.e. an instance
+// of a struct that has fields of type filter.Operator) and
+// converts it to a string that can be fed into the
+// gval.Evaluate function.
 func GetExpression(filter any) string {
-
 	filterValue := reflect.ValueOf(filter)
 	if !structs.IsSlice(filterValue) {
 		filter = []any{filter}
@@ -43,14 +46,18 @@ func GetExpression(filter any) string {
 	return expression
 }
 
+// GetValues turns an input object into a map of field names
+// to values that can be fed into the gval.Evaluate function.
+//
+// The resulting map only has keys that are part of the passed
+// filter object.
+//
 // Example:
 //
 //		filter:     {kind: {eq: "SERIES"}}
 //		input:      {kind: "MOVIE", title: "Back to the Future"}
 //	  values:     {kind => "MOVIE"}
-//	                    ^^ title is not in the map, since it's not in the filter
 func GetValues(filter, input any) map[string]any {
-
 	filterValue := reflect.ValueOf(filter)
 	if !structs.IsSlice(filterValue) {
 		filter = []any{filter}
@@ -67,10 +74,8 @@ func GetValues(filter, input any) map[string]any {
 }
 
 func getValues(filter, input any) map[string]any {
-
 	values := map[string]any{}
 	filterWalkFn := func(filterField reflect.StructField, filterValue reflect.Value) error {
-
 		if filterValue.IsNil() {
 			return nil
 		}
@@ -99,12 +104,10 @@ func getValues(filter, input any) map[string]any {
 }
 
 func removeQuotesOnFields(s string) string {
-
 	return quotedFields.ReplaceAllString(s, "$1")
 }
 
 func replaceComparisonOperators(s string) string {
-
 	s = regexp.MustCompile(`{eq(.*?)}`).ReplaceAllString(s, " == $1 ")
 	s = regexp.MustCompile(`{ne(.*?)}`).ReplaceAllString(s, " != $1 ")
 	s = regexp.MustCompile(`{lte(.*?)}`).ReplaceAllString(s, " <= $1 ")
@@ -117,7 +120,6 @@ func replaceComparisonOperators(s string) string {
 }
 
 func replaceBrackets(s string) string {
-
 	return strings.NewReplacer(
 		`[`, `(`,
 		`]`, `)`,
@@ -127,17 +129,14 @@ func replaceBrackets(s string) string {
 }
 
 func replaceLogicOperators(s string) string {
-
 	return strings.NewReplacer(
 		`,(or`, ` || (`,
 		`,(and`, ` && (`,
 		`,`, ` && `,
 	).Replace(s)
-
 }
 
 func format(expression string) string {
-
 	expression = removeQuotesOnFields(expression)
 	expression = replaceComparisonOperators(expression)
 	expression = replaceBrackets(expression)
