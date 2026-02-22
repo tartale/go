@@ -2,10 +2,8 @@ package jsonx
 
 import "encoding/json"
 
-// MustMarshalJSON takes an object of any type,
-// marshals it to JSON format, and returns the raw
-// bytes, panicking if an error occurs.
-func MustMarshalJSON[T any](t T) []byte {
+// MustMarshal wraps json.Marshal but panics if there's an error.
+func MustMarshal[T any](t T) []byte {
 	bytes, err := json.Marshal(&t)
 	if err != nil {
 		panic(err)
@@ -14,8 +12,22 @@ func MustMarshalJSON[T any](t T) []byte {
 	return bytes
 }
 
-// MustMarshalJSONToString is a convenience function
-// for MustMarshalJSON that casts the result to a string.
-func MustMarshalJSONToString[T any](t T) string {
-	return string(MustMarshalJSON(t))
+// MustMarshalToString is a convenience function
+// for MustMarshal that casts the result to a string.
+func MustMarshalToString[T any](t T) string {
+	return string(MustMarshal(t))
+}
+
+// MustUarshal wraps json.Unmarshal but panics if there's an error.
+func MustUnmarshal[T any](data []byte, t *T) {
+	err := json.Unmarshal(data, t)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// MustUnmarshalFromString is a convenience function
+// for MustUnmarshal that casts the result to a string.
+func MustUnmarshalFromString[T any](data string, t *T) {
+	MustUnmarshal([]byte(data), t)
 }
