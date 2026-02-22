@@ -162,7 +162,7 @@ func (f *Field) FieldOk(name string) (*Field, bool) {
 		a := f.value.Addr()
 		value = &a
 	}
-	v := reflectx.ValueOfElement(value)
+	v := reflectx.ValueOfElement(value.Interface())
 	t := v.Type()
 
 	field, ok := t.FieldByName(name)

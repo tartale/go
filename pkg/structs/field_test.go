@@ -378,12 +378,12 @@ func TestField_FieldOk(t *testing.T) {
 
 	b, ok := s.FieldOk("Bar")
 	if !ok {
-		t.Error("The field 'Bar' should exists.")
+		t.Error("The field 'Bar' should exist.")
 	}
 
 	e, ok := b.FieldOk("E")
 	if !ok {
-		t.Error("The field 'E' should exists.")
+		t.Error("The field 'E' should exist.")
 	}
 
 	val, ok := e.Value().(string)

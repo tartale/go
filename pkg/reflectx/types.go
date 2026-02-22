@@ -103,11 +103,16 @@ func ValueIsElementWrapper(v reflect.Value) bool {
 // e.g. if v is a Ptr, it will get the reflect.Value of the
 // dereferenced type of v instead.
 func ValueOfElement(v any) reflect.Value {
-	valueOf := reflect.ValueOf(v)
-	for ValueIsElementWrapper(valueOf) {
-		valueOf = valueOf.Elem()
+	value := reflect.ValueOf(v)
+	for value.Kind() == reflect.Ptr || value.Kind() == reflect.Interface {
+		if value.Kind() == reflect.Ptr {
+			value = value.Elem()
+		}
+		if value.Kind() == reflect.Interface {
+			value = reflect.ValueOf(value.Interface())
+		}
 	}
-	return valueOf
+	return value
 }
 
 // TypeOfElement drills down on the input v to get

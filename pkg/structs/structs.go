@@ -25,10 +25,15 @@ type Struct struct {
 // New returns a new *Struct with the struct s. It panics if the s's kind is
 // not struct.
 func New(s any) *Struct {
+	reflectValueOfElement := reflectx.ValueOfElement(s)
+	if reflectValueOfElement.Kind() != reflect.Struct {
+		panic(fmt.Sprintf("not struct: %s", reflectValueOfElement.Kind()))
+	}
+	reflectTypeOfElement := reflectx.TypeOfElement(s)
 	return &Struct{
 		raw:                   s,
-		reflectTypeOfElement:  reflectx.TypeOfElement(s),
-		reflectValueOfElement: reflectx.ValueOfElement(s),
+		reflectTypeOfElement:  reflectTypeOfElement,
+		reflectValueOfElement: reflectValueOfElement,
 		TagName:               DefaultTagName,
 	}
 }
