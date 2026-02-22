@@ -27,8 +27,8 @@ type Struct struct {
 func New(s any) *Struct {
 	return &Struct{
 		raw:                   s,
-		reflectTypeOfElement:  reflect.TypeOf(s),
-		reflectValueOfElement: structVal(s),
+		reflectTypeOfElement:  reflectx.TypeOfElement(s),
+		reflectValueOfElement: reflectx.ValueOfElement(s),
 		TagName:               DefaultTagName,
 	}
 }
@@ -426,15 +426,6 @@ func (s *Struct) structFields() []reflect.StructField {
 	}
 
 	return f
-}
-
-func structVal(s any) reflect.Value {
-	v := reflectx.ValueOfElement(s)
-	if v.Kind() != reflect.Struct {
-		panic(fmt.Sprintf("not struct: %s", v.Kind()))
-	}
-
-	return v
 }
 
 // Map converts the given struct to a map[string]any. For more info

@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/tartale/go/pkg/reflectx"
 	"golang.org/x/exp/slices"
 )
 
@@ -161,7 +162,7 @@ func (f *Field) FieldOk(name string) (*Field, bool) {
 		a := f.value.Addr()
 		value = &a
 	}
-	v := structVal(value.Interface())
+	v := reflectx.ValueOfElement(value)
 	t := v.Type()
 
 	field, ok := t.FieldByName(name)
