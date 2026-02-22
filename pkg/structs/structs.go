@@ -411,7 +411,7 @@ func (s *Struct) Name() string {
 func (s *Struct) structFields() []reflect.StructField {
 	name := s.Name()
 	_ = name
-	t := s.reflectValueOfElement.Type()
+	t := s.reflectTypeOfElement
 
 	var f []reflect.StructField
 

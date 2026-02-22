@@ -43,7 +43,7 @@ func TestStructIndexes(t *testing.T) {
 }
 
 func TestMap(t *testing.T) {
-	var T = struct {
+	T := struct {
 		A string
 		B int
 		C bool
@@ -79,11 +79,10 @@ func TestMap(t *testing.T) {
 			t.Errorf("Map should have the value %v", val)
 		}
 	}
-
 }
 
 func TestMap_Tag(t *testing.T) {
-	var T = struct {
+	T := struct {
 		A string `structs:"x"`
 		B int    `structs:"y"`
 		C bool   `structs:"z"`
@@ -109,11 +108,10 @@ func TestMap_Tag(t *testing.T) {
 			t.Errorf("Map should have the key %v", key)
 		}
 	}
-
 }
 
 func TestMap_CustomTag(t *testing.T) {
-	var T = struct {
+	T := struct {
 		A string `json:"x"`
 		B int    `json:"y"`
 		C bool   `json:"z"`
@@ -160,18 +158,17 @@ func TestMap_CustomTag(t *testing.T) {
 	if e != "e-value" {
 		t.Errorf("D.E field should be equal to 'e-value', got: '%v'", e)
 	}
-
 }
 
 func TestMap_MultipleCustomTag(t *testing.T) {
-	var A = struct {
+	A := struct {
 		X string `aa:"ax"`
 	}{"a_value"}
 
 	aStruct := New(A)
 	aStruct.TagName = "aa"
 
-	var B = struct {
+	B := struct {
 		X string `bb:"bx"`
 	}{"b_value"}
 
@@ -334,6 +331,7 @@ func TestMap_NestedMapWithStringValues(t *testing.T) {
 		t.Errorf("Map nested struct's name field should give example, got: %s", name)
 	}
 }
+
 func TestMap_NestedMapWithInterfaceValues(t *testing.T) {
 	type B struct {
 		Foo map[string]interface{}
@@ -581,7 +579,6 @@ func TestMap_Flatnested(t *testing.T) {
 	if !reflect.DeepEqual(m, expectedMap) {
 		t.Errorf("The exprected map %+v does't correspond to %+v", expectedMap, m)
 	}
-
 }
 
 func TestMap_FlatnestedOverwrite(t *testing.T) {
@@ -626,7 +623,7 @@ func TestMap_TimeField(t *testing.T) {
 }
 
 func TestFillMap(t *testing.T) {
-	var T = struct {
+	T := struct {
 		A string
 		B int
 		C bool
@@ -662,7 +659,7 @@ func TestFillMap(t *testing.T) {
 }
 
 func TestFillMap_Nil(t *testing.T) {
-	var T = struct {
+	T := struct {
 		A string
 		B int
 		C bool
@@ -682,8 +679,9 @@ func TestFillMap_Nil(t *testing.T) {
 	// nil should no
 	FillMap(T, nil)
 }
+
 func TestStruct(t *testing.T) {
-	var T = struct{}{}
+	T := struct{}{}
 
 	if !IsStruct(T) {
 		t.Errorf("T should be a struct, got: %T", T)
@@ -692,11 +690,10 @@ func TestStruct(t *testing.T) {
 	if !IsStruct(&T) {
 		t.Errorf("T should be a struct, got: %T", T)
 	}
-
 }
 
 func TestValues(t *testing.T) {
-	var T = struct {
+	T := struct {
 		A string
 		B int
 		C bool
@@ -847,7 +844,7 @@ func TestValues_Anonymous(t *testing.T) {
 }
 
 func TestNames(t *testing.T) {
-	var T = struct {
+	T := struct {
 		A string
 		B int
 		C bool
@@ -880,7 +877,7 @@ func TestNames(t *testing.T) {
 }
 
 func TestFields(t *testing.T) {
-	var T = struct {
+	T := struct {
 		A string
 		B int
 		C bool
@@ -981,7 +978,7 @@ func TestFields_Anonymous(t *testing.T) {
 }
 
 func TestIsZero(t *testing.T) {
-	var T = struct {
+	T := struct {
 		A string
 		B int
 		C bool `structs:"-"`
@@ -993,7 +990,7 @@ func TestIsZero(t *testing.T) {
 		t.Error("IsZero should return true because none of the fields are initialized.")
 	}
 
-	var X = struct {
+	X := struct {
 		A string
 		F *bool
 	}{
@@ -1005,7 +1002,7 @@ func TestIsZero(t *testing.T) {
 		t.Error("IsZero should return false because A is initialized")
 	}
 
-	var Y = struct {
+	Y := struct {
 		A string
 		B int
 	}{
@@ -1044,7 +1041,6 @@ func TestIsZero_OmitNested(t *testing.T) {
 	if !ok {
 		t.Error("IsZero should return true because neither A nor B is initialized")
 	}
-
 }
 
 func TestIsZero_Nested(t *testing.T) {
@@ -1072,7 +1068,6 @@ func TestIsZero_Nested(t *testing.T) {
 	if !ok {
 		t.Error("IsZero should return true because neither A nor B is initialized")
 	}
-
 }
 
 func TestIsZero_Anonymous(t *testing.T) {
@@ -1105,7 +1100,7 @@ func TestIsZero_Anonymous(t *testing.T) {
 }
 
 func TestHasZero(t *testing.T) {
-	var T = struct {
+	T := struct {
 		A string
 		B int
 		C bool `structs:"-"`
@@ -1120,7 +1115,7 @@ func TestHasZero(t *testing.T) {
 		t.Error("HasZero should return true because A and B are initialized.")
 	}
 
-	var X = struct {
+	X := struct {
 		A string
 		F *bool
 	}{
@@ -1132,7 +1127,7 @@ func TestHasZero(t *testing.T) {
 		t.Error("HasZero should return true because A is initialized")
 	}
 
-	var Y = struct {
+	Y := struct {
 		A string
 		B int
 	}{
@@ -1315,7 +1310,6 @@ func (p *Person) String() string {
 }
 
 func TestTagWithStringOption(t *testing.T) {
-
 	type Address struct {
 		Country string  `json:"country"`
 		Person  *Person `json:"person,string"`

@@ -10,7 +10,7 @@ import "reflect"
 type WalkFn func(field reflect.StructField, value reflect.Value) error
 
 // Walk is a convenience function for the Struct.Walk() method.
-func Walk(s interface{}, fn WalkFn) error {
+func Walk(s any, fn WalkFn) error {
 	return New(s).Walk(fn)
 }
 
