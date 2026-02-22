@@ -32,11 +32,11 @@ type Operator struct {
 	Matches any `json:"matches,omitempty"`
 }
 
-type TypeFilter struct {
+type TypeFilter[T any] struct {
 	any
 }
 
-func NewTypeFilter[T any]() TypeFilter {
+func NewTypeFilter[T any]() TypeFilter[T] {
 	// Walk the input struct and make a new struct that
 	// has all same field names, but with the type *Operator
 	// instead of the original type.
@@ -72,27 +72,27 @@ func NewTypeFilter[T any]() TypeFilter {
 	newFields[len(newFields)-1].Type = sliceOfNewStructType
 	newStructType = reflect.StructOf(newFields)
 	sliceOfNewStructType = reflect.SliceOf(newStructType)
-	typeFilter := TypeFilter{reflect.New(sliceOfNewStructType).Interface()}
+	typeFilter := TypeFilter[T]{reflect.New(sliceOfNewStructType).Interface()}
 
 	return typeFilter
 }
 
-func NewTypeFilterFromJson[T any](inputJson string) TypeFilter {
+func NewTypeFilterFromJson[T any](inputJson string) TypeFilter[T] {
 	typeFilter := NewTypeFilter[T]()
 	jsonx.MustUnmarshalFromString(inputJson, &typeFilter)
 
 	return typeFilter
 }
 
-func (f TypeFilter) MarshalJSON() ([]byte, error) {
+func (f TypeFilter[T]) MarshalJSON() ([]byte, error) {
 	return json.Marshal(f.any)
 }
 
-func (f TypeFilter) UnmarshalJSON(data []byte) error {
+func (f TypeFilter[T]) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, f.any)
 }
 
-func (f TypeFilter) ShouldInclude(val any) bool {
+func (f TypeFilter[T]) ShouldInclude(val any) bool {
 	expression := f.GetExpression()
 	mapOfValues := GetMapOfValues(val)
 	eval := mustEvaluate(expression, mapOfValues)
@@ -100,20 +100,20 @@ func (f TypeFilter) ShouldInclude(val any) bool {
 	return eval.(bool)
 }
 
-func (f TypeFilter) GetExpression() string {
+func (f TypeFilter[T]) GetExpression() string {
 	filterableJson := jsonx.MustMarshalToString(f)
 	expression := format(filterableJson)
 
 	return expression
 }
 
-func (f TypeFilter) Filter(vals iter.Seq[any]) iter.Seq[any] {
-	return func(yield func(any) bool) {
+func (f TypeFilter[T]) Filter(vals iter.Seq[T]) iter.Seq[T] {
+	return func(yield func(T) bool) {
 		for v := range vals {
 			if !f.ShouldInclude(v) {
 				continue
 			}
-			if !yield(f) {
+			if !yield(v) {
 				break
 			}
 		}
