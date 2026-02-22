@@ -2,7 +2,6 @@ package filter
 
 import (
 	"encoding/json"
-	"fmt"
 	"iter"
 	"reflect"
 	"regexp"
@@ -13,12 +12,10 @@ import (
 	"github.com/tartale/go/pkg/primitives"
 	"github.com/tartale/go/pkg/reflectx"
 	"github.com/tartale/go/pkg/structs"
-	"golang.org/x/exp/maps"
 )
 
 var (
 	quotedFields   = regexp.MustCompile(`"(\w+)":`)
-	typeOfString   = reflect.TypeFor[string]()
 	typeOfOperator = reflect.TypeFor[*Operator]()
 )
 
@@ -84,33 +81,33 @@ func NewTypeFilterFromJson[T any](inputJson string) TypeFilter[T] {
 	return typeFilter
 }
 
-func (f TypeFilter[T]) MarshalJSON() ([]byte, error) {
-	return json.Marshal(f.any)
+func (tf TypeFilter[T]) MarshalJSON() ([]byte, error) {
+	return json.Marshal(tf.any)
 }
 
-func (f TypeFilter[T]) UnmarshalJSON(data []byte) error {
-	return json.Unmarshal(data, f.any)
+func (tf TypeFilter[T]) UnmarshalJSON(data []byte) error {
+	return json.Unmarshal(data, tf.any)
 }
 
-func (f TypeFilter[T]) ShouldInclude(val any) bool {
-	expression := f.GetExpression()
+func (tf TypeFilter[T]) ShouldInclude(val any) bool {
+	expression := tf.GetExpression()
 	mapOfValues := GetMapOfValues(val)
 	eval := mustEvaluate(expression, mapOfValues)
 
 	return eval.(bool)
 }
 
-func (f TypeFilter[T]) GetExpression() string {
-	filterableJson := jsonx.MustMarshalToString(f)
+func (tf TypeFilter[T]) GetExpression() string {
+	filterableJson := jsonx.MustMarshalToString(tf.any)
 	expression := format(filterableJson)
 
 	return expression
 }
 
-func (f TypeFilter[T]) Filter(vals iter.Seq[T]) iter.Seq[T] {
+func (tf TypeFilter[T]) Filter(vals iter.Seq[T]) iter.Seq[T] {
 	return func(yield func(T) bool) {
 		for v := range vals {
-			if !f.ShouldInclude(v) {
+			if !tf.ShouldInclude(v) {
 				continue
 			}
 			if !yield(v) {
@@ -138,85 +135,6 @@ func mustEvaluate(expression string, parameter interface{}, opts ...gval.Languag
 		panic(err)
 	}
 	return result
-}
-
-////////////// legacy //////////////
-
-// GetExpression takes a filter object (i.e. an instance
-// of a struct that has fields of type filter.Operator) and
-// converts it to a string that can be fed into the
-// gval.Evaluate function.
-func GetExpression(filter any) string {
-	filterValue := reflect.ValueOf(filter)
-	if !structs.IsSlice(filterValue) {
-		filter = []any{filter}
-	}
-	filterBytes, err := json.Marshal(filter)
-	if err != nil {
-		panic(fmt.Errorf("unexpected error when marshaling filter: %w", err))
-	}
-
-	filterJson := string(filterBytes)
-	expression := format(filterJson)
-
-	return expression
-}
-
-// GetValues turns an input object into a map of field names
-// to values that can be fed into the gval.Evaluate function.
-//
-// The resulting map only has keys that are part of the passed
-// filter object.
-//
-// Example:
-//
-//		filter:     {kind: {eq: "SERIES"}}
-//		input:      {kind: "MOVIE", title: "Back to the Future"}
-//	  values:     {kind => "MOVIE"}
-func GetValues(filter, input any) map[string]any {
-	filterValue := reflect.ValueOf(filter)
-	if !structs.IsSlice(filterValue) {
-		filter = []any{filter}
-	}
-
-	values := map[string]any{}
-	for i := 0; i < filterValue.Len(); i++ {
-		f := filterValue.Index(i).Interface()
-		v := getValues(f, input)
-		maps.Copy(values, v)
-	}
-
-	return values
-}
-
-func getValues(filter, input any) map[string]any {
-	values := map[string]any{}
-	filterWalkFn := func(filterField reflect.StructField, filterValue reflect.Value) error {
-		if filterValue.IsNil() {
-			return nil
-		}
-		switch filterValue.Interface().(type) {
-		case *Operator:
-
-			inputField, ok := structs.New(input).FieldOk(filterField.Name)
-			if !ok {
-				panic(fmt.Errorf("filter contains a field that is not in the input: %s", filterField.Name))
-			}
-			inputFieldName := inputField.TagRoot("json")
-			inputFieldValue := inputField.Value()
-			inputFieldReflectValue := reflect.ValueOf(inputFieldValue)
-			if inputFieldReflectValue.Kind() == reflect.String {
-				inputFieldValue = inputFieldReflectValue.Convert(typeOfString).Interface()
-			}
-			values[inputFieldName] = inputFieldValue
-		}
-
-		return nil
-	}
-
-	structs.Walk(filter, filterWalkFn)
-
-	return values
 }
 
 func removeQuotesOnFields(s string) string {

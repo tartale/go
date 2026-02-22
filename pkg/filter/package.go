@@ -18,9 +18,31 @@ package filter
 // 			MovieYear   int      `json:"movieYear"`
 // 		}
 //
-// and you would like to be able to filter a list of
-// these objects based on Title or MovieYear. To use this package,
-// you would define a corresponding struct:
+// You can create an object that is able to filter any of these
+// fields using a JSON document that describes a boolean
+// expression; for example:
+//
+// 		movies := GetAllMovies()
+//
+// 		movieFilter := NewTypeFilter[Movie]
+// 		movieFilterJson := `[{"title": {"eq": "Back to the Future"}}]`
+//		jsonx.MustUnmarshalFromString(movieFilterJson, &movieFilter)
+// 		filteredMovies := typeFilter.Filter(slices.Values(movies))
+// 		filteredMovieValues := slices.Collect(filteredMovies)
+//
+// Note: there is also a convenience function to create and populate
+// the filter in one step:
+//
+//    movieFilter := NewTypeFilterFromJson[Movie](`[{"title": {"eq": "Interstellar"}}]`)
+//
+// The JSON expression operators (e.g. "eq") are defined in the filter.Operator
+// struct. You can also create compound filters (using "and" and "or" operators).
+// The tests include several examples.
+//
+// Additionally, you can "bring your own filter" by defining a struct that uses the
+// filter.Operator type. This is useful if you want the API to have a well-known
+// structure that can be used for swagger documentation, code generation, graphQL
+// definitions, etc.  For example:
 //
 // 		type MovieFilter struct {
 // 			Title     *filter.Operator `json:"title,omitempty"`
@@ -29,34 +51,15 @@ package filter
 // 			Or        []*MovieFilter   `json:"or,omitempty"`
 // 		}
 //
-// This struct can be used in your API like this:
-//
-// 	POST /movies/search
-// 	{
-// 		"filters": [
-// 			"title": {
-// 				"eq": "Back to the Future"
-// 			},
-// 			"and": {
-// 				"movieYear": {
-// 					"eq": 1985
-// 				}
-// 			}
-// 		]
-// 	}
-//
 // Then, the resolver for this API call would look something like this:
 //
 // 	func MovieSearch(ctx context.Context, filters: []MovieFilter) []Movie {
-// 		allMovies := getAllMovies()
+// 		movies := GetAllMovies()
 //
-// 		expression := filter.GetExpression(filters)
-// 		for _, movie := range allMovies {
-// 			values := filter.GetValues(filters, movie)
-// 			shouldInclude, _ := gval.Evaluate(expression, values)
-// 			if shouldInclude.(bool) {
-// 				// movie has passed the filter
-// 			}
-// 		}
+// 		// Wrap the MovieFilter object in a TypeFilter, then it can
+// 		// be used just like the dynamically-created one.
+// 		typeFilter := TypeFilter[Movie]{filters}
+// 		filteredMovies := typeFilter.Filter(slices.Values(movies))
+// 		filteredMovieValues := slices.Collect(filteredMovies)
 // 	}
 //
