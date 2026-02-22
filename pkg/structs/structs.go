@@ -3,36 +3,37 @@ package structs
 
 import (
 	"fmt"
-
 	"reflect"
+
+	"github.com/tartale/go/pkg/reflectx"
 )
 
-var (
-	// DefaultTagName is the default tag name for struct fields which provides
-	// a more granular to tweak certain structs. Lookup the necessary functions
-	// for more info.
-	DefaultTagName = "structs" // struct's field default tag name
-)
+// DefaultTagName is the default tag name for struct fields which provides
+// a more granular to tweak certain structs. Lookup the necessary functions
+// for more info.
+var DefaultTagName = "structs" // struct's field default tag name
 
 // Struct encapsulates a struct type to provide several high level functions
 // around the struct.
 type Struct struct {
-	raw     interface{}
-	value   reflect.Value
-	TagName string
+	raw                   any
+	reflectTypeOfElement  reflect.Type
+	reflectValueOfElement reflect.Value
+	TagName               string
 }
 
 // New returns a new *Struct with the struct s. It panics if the s's kind is
 // not struct.
-func New(s interface{}) *Struct {
+func New(s any) *Struct {
 	return &Struct{
-		raw:     s,
-		value:   strctVal(s),
-		TagName: DefaultTagName,
+		raw:                   s,
+		reflectTypeOfElement:  reflect.TypeOf(s),
+		reflectValueOfElement: structVal(s),
+		TagName:               DefaultTagName,
 	}
 }
 
-// Map converts the given struct to a map[string]interface{}, where the keys
+// Map converts the given struct to a map[string]any, where the keys
 // of the map are the field names and the values of the map the associated
 // values of the fields. The default key string is the struct field name but
 // can be changed in the struct field's tag value. The "structs" key in the
@@ -78,15 +79,15 @@ func New(s interface{}) *Struct {
 //
 // Note that only exported fields of a struct can be accessed, non exported
 // fields will be neglected.
-func (s *Struct) Map() map[string]interface{} {
-	out := make(map[string]interface{})
+func (s *Struct) Map() map[string]any {
+	out := make(map[string]any)
 	s.FillMap(out)
 	return out
 }
 
 // FillMap is the same as Map. Instead of returning the output, it fills the
 // given map.
-func (s *Struct) FillMap(out map[string]interface{}) {
+func (s *Struct) FillMap(out map[string]any) {
 	if out == nil {
 		return
 	}
@@ -95,9 +96,9 @@ func (s *Struct) FillMap(out map[string]interface{}) {
 
 	for _, field := range fields {
 		name := field.Name
-		val := s.value.FieldByName(name)
+		val := s.reflectValueOfElement.FieldByName(name)
 		isSubStruct := false
-		var finalVal interface{}
+		var finalVal any
 
 		tagName, tagOpts := parseTag(field.Tag.Get(s.TagName))
 		if tagName != "" {
@@ -140,8 +141,8 @@ func (s *Struct) FillMap(out map[string]interface{}) {
 		}
 
 		if isSubStruct && (tagOpts.Has("flatten")) {
-			for k := range finalVal.(map[string]interface{}) {
-				out[k] = finalVal.(map[string]interface{})[k]
+			for k := range finalVal.(map[string]any) {
+				out[k] = finalVal.(map[string]any)[k]
 			}
 		} else {
 			out[name] = finalVal
@@ -149,7 +150,7 @@ func (s *Struct) FillMap(out map[string]interface{}) {
 	}
 }
 
-// Values converts the given s struct's field values to a []interface{}.  A
+// Values converts the given s struct's field values to a []any.  A
 // struct tag with the content of "-" ignores the that particular field.
 // Example:
 //
@@ -171,13 +172,13 @@ func (s *Struct) FillMap(out map[string]interface{}) {
 //
 // Note that only exported fields of a struct can be accessed, non exported
 // fields  will be neglected.
-func (s *Struct) Values() []interface{} {
+func (s *Struct) Values() []any {
 	fields := s.structFields()
 
-	var t []interface{}
+	var t []any
 
 	for _, field := range fields {
-		val := s.value.FieldByName(field.Name)
+		val := s.reflectValueOfElement.FieldByName(field.Name)
 
 		_, tagOpts := parseTag(field.Tag.Get(s.TagName))
 
@@ -202,7 +203,7 @@ func (s *Struct) Values() []interface{} {
 
 		if IsStruct(val.Interface()) && !tagOpts.Has("omitnested") {
 			// look out for embedded structs, and convert them to a
-			// []interface{} to be added to the final values slice
+			// []any to be added to the final values slice
 			t = append(t, Values(val.Interface())...)
 		} else {
 			t = append(t, val.Interface())
@@ -220,7 +221,7 @@ func (s *Struct) Values() []interface{} {
 //
 // It panics if s's kind is not struct.
 func (s *Struct) Fields() []*Field {
-	return getFields(s.value, s.TagName)
+	return getFields(s.reflectValueOfElement, s.TagName)
 }
 
 // Names returns a slice of field names. A struct tag with the content of "-"
@@ -231,7 +232,7 @@ func (s *Struct) Fields() []*Field {
 //
 // It panics if s's kind is not struct.
 func (s *Struct) Names() []string {
-	fields := getFields(s.value, s.TagName)
+	fields := getFields(s.reflectValueOfElement, s.TagName)
 
 	names := make([]string, len(fields))
 
@@ -285,7 +286,7 @@ func (s *Struct) Field(name string) *Field {
 // around a single struct field entity. The boolean returns true if the field
 // was found.
 func (s *Struct) FieldOk(name string) (*Field, bool) {
-	t := s.value.Type()
+	t := s.reflectValueOfElement.Type()
 
 	field, ok := t.FieldByName(name)
 	if !ok {
@@ -294,7 +295,7 @@ func (s *Struct) FieldOk(name string) (*Field, bool) {
 
 	return &Field{
 		field:      field,
-		value:      s.value.FieldByName(name),
+		value:      s.reflectValueOfElement.FieldByName(name),
 		defaultTag: s.TagName,
 	}, true
 }
@@ -319,7 +320,7 @@ func (s *Struct) IsZero() bool {
 	fields := s.structFields()
 
 	for _, field := range fields {
-		val := s.value.FieldByName(field.Name)
+		val := s.reflectValueOfElement.FieldByName(field.Name)
 
 		_, tagOpts := parseTag(field.Tag.Get(s.TagName))
 
@@ -366,7 +367,7 @@ func (s *Struct) HasZero() bool {
 	fields := s.structFields()
 
 	for _, field := range fields {
-		val := s.value.FieldByName(field.Name)
+		val := s.reflectValueOfElement.FieldByName(field.Name)
 
 		_, tagOpts := parseTag(field.Tag.Get(s.TagName))
 
@@ -396,7 +397,7 @@ func (s *Struct) HasZero() bool {
 // Name returns the structs's type name within its package. For more info refer
 // to Name() function.
 func (s *Struct) Name() string {
-	return s.value.Type().Name()
+	return s.reflectValueOfElement.Type().Name()
 }
 
 // structFields returns the exported struct fields for a given s struct. This
@@ -405,7 +406,7 @@ func (s *Struct) Name() string {
 func (s *Struct) structFields() []reflect.StructField {
 	name := s.Name()
 	_ = name
-	t := s.value.Type()
+	t := s.reflectValueOfElement.Type()
 
 	var f []reflect.StructField
 
@@ -427,19 +428,8 @@ func (s *Struct) structFields() []reflect.StructField {
 	return f
 }
 
-func strctVal(s interface{}) reflect.Value {
-	v := reflect.ValueOf(s)
-
-	// if pointer or interface get the underlying element≤
-	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
-		if v.Kind() == reflect.Ptr {
-			v = v.Elem()
-		}
-		if v.Kind() == reflect.Interface {
-			v = reflect.ValueOf(v.Interface())
-		}
-	}
-
+func structVal(s any) reflect.Value {
+	v := reflectx.ValueOfElement(s)
 	if v.Kind() != reflect.Struct {
 		panic(fmt.Sprintf("not struct: %s", v.Kind()))
 	}
@@ -447,51 +437,51 @@ func strctVal(s interface{}) reflect.Value {
 	return v
 }
 
-// Map converts the given struct to a map[string]interface{}. For more info
+// Map converts the given struct to a map[string]any. For more info
 // refer to Struct types Map() method. It panics if s's kind is not struct.
-func Map(s interface{}) map[string]interface{} {
+func Map(s any) map[string]any {
 	return New(s).Map()
 }
 
 // FillMap is the same as Map. Instead of returning the output, it fills the
 // given map.
-func FillMap(s interface{}, out map[string]interface{}) {
+func FillMap(s any, out map[string]any) {
 	New(s).FillMap(out)
 }
 
-// Values converts the given struct to a []interface{}. For more info refer to
+// Values converts the given struct to a []any. For more info refer to
 // Struct types Values() method.  It panics if s's kind is not struct.
-func Values(s interface{}) []interface{} {
+func Values(s any) []any {
 	return New(s).Values()
 }
 
 // Fields returns a slice of *Field. For more info refer to Struct types
 // Fields() method.  It panics if s's kind is not struct.
-func Fields(s interface{}) []*Field {
+func Fields(s any) []*Field {
 	return New(s).Fields()
 }
 
 // Names returns a slice of field names. For more info refer to Struct types
 // Names() method.  It panics if s's kind is not struct.
-func Names(s interface{}) []string {
+func Names(s any) []string {
 	return New(s).Names()
 }
 
 // IsZero returns true if all fields is equal to a zero value. For more info
 // refer to Struct types IsZero() method.  It panics if s's kind is not struct.
-func IsZero(s interface{}) bool {
+func IsZero(s any) bool {
 	return New(s).IsZero()
 }
 
 // HasZero returns true if any field is equal to a zero value. For more info
 // refer to Struct types HasZero() method.  It panics if s's kind is not struct.
-func HasZero(s interface{}) bool {
+func HasZero(s any) bool {
 	return New(s).HasZero()
 }
 
 // IsStruct returns true if the given variable is a struct or a pointer to
 // struct.
-func IsStruct(s interface{}) bool {
+func IsStruct(s any) bool {
 	v := reflect.ValueOf(s)
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
@@ -507,14 +497,14 @@ func IsStruct(s interface{}) bool {
 
 // Name returns the structs's type name within its package. It returns an
 // empty string for unnamed types. It panics if s's kind is not struct.
-func Name(s interface{}) string {
+func Name(s any) string {
 	return New(s).Name()
 }
 
 // nested retrieves recursively all types for the given value and returns the
 // nested value.
-func (s *Struct) nested(val reflect.Value) interface{} {
-	var finalVal interface{}
+func (s *Struct) nested(val reflect.Value) any {
+	var finalVal any
 
 	v := reflect.ValueOf(val.Interface())
 	if v.Kind() == reflect.Ptr {
@@ -551,7 +541,7 @@ func (s *Struct) nested(val reflect.Value) interface{} {
 		if mapElem.Kind() == reflect.Struct ||
 			(mapElem.Kind() == reflect.Slice &&
 				mapElem.Elem().Kind() == reflect.Struct) {
-			m := make(map[string]interface{}, val.Len())
+			m := make(map[string]any, val.Len())
 			for _, k := range val.MapKeys() {
 				m[k.String()] = s.nested(val.MapIndex(k))
 			}
@@ -578,7 +568,7 @@ func (s *Struct) nested(val reflect.Value) interface{} {
 			break
 		}
 
-		slices := make([]interface{}, val.Len())
+		slices := make([]any, val.Len())
 		for x := 0; x < val.Len(); x++ {
 			slices[x] = s.nested(val.Index(x))
 		}

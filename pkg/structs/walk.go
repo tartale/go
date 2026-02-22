@@ -25,7 +25,7 @@ func (s *Struct) Walk(fn WalkFn) error {
 	fields := s.structFields()
 
 	for _, field := range fields {
-		val := s.value.FieldByName(field.Name)
+		val := s.reflectValueOfElement.FieldByName(field.Name)
 
 		if err := s.WalkValue(field, val, fn); err != nil {
 			return err

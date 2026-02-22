@@ -3,17 +3,21 @@ package filter
 import (
 	"encoding/json"
 	"fmt"
+	"iter"
 	"reflect"
 	"regexp"
 	"strings"
 
+	"github.com/PaesslerAG/gval"
+	"github.com/tartale/go/pkg/jsonx"
 	"github.com/tartale/go/pkg/structs"
 	"golang.org/x/exp/maps"
 )
 
 var (
-	quotedFields = regexp.MustCompile(`"(\w+)":`)
-	typeOfString = reflect.TypeOf("")
+	quotedFields   = regexp.MustCompile(`"(\w+)":`)
+	typeOfString   = reflect.TypeFor[string]()
+	typeOfOperator = reflect.TypeFor[*Operator]()
 )
 
 type Operator struct {
@@ -25,6 +29,112 @@ type Operator struct {
 	Gt      any `json:"gt,omitempty"`
 	Matches any `json:"matches,omitempty"`
 }
+
+type TypeFilter struct {
+	any
+}
+
+func NewTypeFilter[T any](inputJson string) TypeFilter {
+	// Walk the input struct and make a new struct that
+	// has all same field names, but with the type *Operator
+	// instead of the original type.
+	var newFields []reflect.StructField
+	filterWalkFn := func(filterField reflect.StructField, filterValue reflect.Value) error {
+		newField := filterField
+		newField.Type = typeOfOperator
+		newFields = append(newFields, newField)
+		return nil
+	}
+	var t T
+	structs.Walk(t, filterWalkFn)
+	newStructType := reflect.StructOf(newFields)
+	arrayOfNewStructType := reflect.SliceOf(newStructType)
+	newFields = append(newFields, reflect.StructField{
+		Name: "And",
+		Type: arrayOfNewStructType,
+		Tag:  reflect.StructTag(`json:"and,omitempty"`),
+	})
+	newFields = append(newFields, reflect.StructField{
+		Name: "Or",
+		Type: arrayOfNewStructType,
+		Tag:  reflect.StructTag(`json:"or,omitempty"`),
+	})
+	newStructType = reflect.StructOf(newFields)
+
+	typeFilterInterface := reflect.New(newStructType).Interface()
+	jsonx.MustUnmarshalFromString(inputJson, &typeFilterInterface)
+	typeFilter := TypeFilter{typeFilterInterface}
+
+	return typeFilter
+}
+
+func (f TypeFilter) MarshalJSON() (_ []byte, _ error) {
+	return json.Marshal(f.any)
+}
+
+func (f TypeFilter) UnmarshalJSON(data []byte) (_ error) {
+	return json.Unmarshal(data, f.any)
+}
+
+func (f TypeFilter) ShouldInclude(val any) bool {
+	expression := f.GetExpression()
+	mapOfValues := structs.Map(val)
+	eval := mustEvaluate(expression, mapOfValues)
+
+	return eval.(bool)
+}
+
+func (f TypeFilter) GetExpression() string {
+	filterableJson := jsonx.MustMarshalToString(f.any)
+	expression := format(filterableJson)
+
+	return expression
+}
+
+func (f TypeFilter) Filter(vals iter.Seq[any]) iter.Seq[any] {
+	return func(yield func(any) bool) {
+		for v := range vals {
+			if !f.ShouldInclude(v) {
+				continue
+			}
+			if !yield(f) {
+				break
+			}
+		}
+	}
+}
+
+func mustEvaluate(expression string, parameter interface{}, opts ...gval.Language) any {
+	result, err := gval.Evaluate(expression, parameter, opts...)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+// func shouldInclude(f Filterable) bool {
+// 	expression := getExpression(f)
+// 	print(expression)
+
+// 	return false
+// }
+
+// func getExpression(f Filterable) string {
+// 	filterableReflectValue := reflect.ValueOf(f)
+// 	if !structs.IsSlice(filterableReflectValue) {
+// 		f = []Filterable{f}
+// 	}
+// 	filterableJson := jsonx.MustMarshalToString(f)
+// 	expression := format(filterableJson)
+
+// 	return expression
+// }
+
+// func getMapOfValues(f Filterable) map[string]any {
+// 	return nil
+// }
+
+////////////// legacy //////////////
 
 // GetExpression takes a filter object (i.e. an instance
 // of a struct that has fields of type filter.Operator) and

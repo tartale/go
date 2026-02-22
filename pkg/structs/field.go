@@ -56,7 +56,6 @@ func (f *Field) TagElement(key, elem string) string {
 // TagRoot returns the initial component of the value associated with key
 // in the tag string. Returns the empty string if there is no such key.
 func (f *Field) TagRoot(key string) string {
-
 	tag := f.Tag(key)
 	return strings.Split(tag, ",")[0]
 }
@@ -162,7 +161,7 @@ func (f *Field) FieldOk(name string) (*Field, bool) {
 		a := f.value.Addr()
 		value = &a
 	}
-	v := strctVal(value.Interface())
+	v := structVal(value.Interface())
 	t := v.Type()
 
 	field, ok := t.FieldByName(name)
