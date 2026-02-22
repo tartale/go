@@ -10,6 +10,8 @@ import (
 
 	"github.com/PaesslerAG/gval"
 	"github.com/tartale/go/pkg/jsonx"
+	"github.com/tartale/go/pkg/primitives"
+	"github.com/tartale/go/pkg/reflectx"
 	"github.com/tartale/go/pkg/structs"
 	"golang.org/x/exp/maps"
 )
@@ -34,7 +36,7 @@ type TypeFilter struct {
 	any
 }
 
-func NewTypeFilter[T any](inputJson string) TypeFilter {
+func NewTypeFilter[T any]() TypeFilter {
 	// Walk the input struct and make a new struct that
 	// has all same field names, but with the type *Operator
 	// instead of the original type.
@@ -46,46 +48,60 @@ func NewTypeFilter[T any](inputJson string) TypeFilter {
 		return nil
 	}
 	var t T
-	structs.Walk(t, filterWalkFn)
+	structWrapper := structs.New(t)
+	structWrapper.TagName = "json"
+	structWrapper.Walk(filterWalkFn)
 	newStructType := reflect.StructOf(newFields)
-	arrayOfNewStructType := reflect.SliceOf(newStructType)
-	newFields = append(newFields, reflect.StructField{
+	sliceOfNewStructType := reflect.SliceOf(newStructType)
+	andType := reflect.StructField{
 		Name: "And",
-		Type: arrayOfNewStructType,
+		Type: sliceOfNewStructType,
 		Tag:  reflect.StructTag(`json:"and,omitempty"`),
-	})
-	newFields = append(newFields, reflect.StructField{
+	}
+	orType := reflect.StructField{
 		Name: "Or",
-		Type: arrayOfNewStructType,
+		Type: sliceOfNewStructType,
 		Tag:  reflect.StructTag(`json:"or,omitempty"`),
-	})
+	}
+	newFields = append(newFields, andType, orType)
 	newStructType = reflect.StructOf(newFields)
-
-	typeFilterInterface := reflect.New(newStructType).Interface()
-	jsonx.MustUnmarshalFromString(inputJson, &typeFilterInterface)
-	typeFilter := TypeFilter{typeFilterInterface}
+	sliceOfNewStructType = reflect.SliceOf(newStructType)
+	// Fixup the "and" and "or" types to ensure they the addition of themselves,
+	// then remake the struct type and slice of one more time
+	newFields[len(newFields)-2].Type = sliceOfNewStructType
+	newFields[len(newFields)-1].Type = sliceOfNewStructType
+	newStructType = reflect.StructOf(newFields)
+	sliceOfNewStructType = reflect.SliceOf(newStructType)
+	typeFilter := TypeFilter{reflect.New(sliceOfNewStructType).Interface()}
 
 	return typeFilter
 }
 
-func (f TypeFilter) MarshalJSON() (_ []byte, _ error) {
+func NewTypeFilterFromJson[T any](inputJson string) TypeFilter {
+	typeFilter := NewTypeFilter[T]()
+	jsonx.MustUnmarshalFromString(inputJson, &typeFilter)
+
+	return typeFilter
+}
+
+func (f TypeFilter) MarshalJSON() ([]byte, error) {
 	return json.Marshal(f.any)
 }
 
-func (f TypeFilter) UnmarshalJSON(data []byte) (_ error) {
+func (f TypeFilter) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, f.any)
 }
 
 func (f TypeFilter) ShouldInclude(val any) bool {
 	expression := f.GetExpression()
-	mapOfValues := structs.Map(val)
+	mapOfValues := GetMapOfValues(val)
 	eval := mustEvaluate(expression, mapOfValues)
 
 	return eval.(bool)
 }
 
 func (f TypeFilter) GetExpression() string {
-	filterableJson := jsonx.MustMarshalToString(f.any)
+	filterableJson := jsonx.MustMarshalToString(f)
 	expression := format(filterableJson)
 
 	return expression
@@ -104,6 +120,18 @@ func (f TypeFilter) Filter(vals iter.Seq[any]) iter.Seq[any] {
 	}
 }
 
+func GetMapOfValues(val any) map[string]any {
+	structWrapper := structs.New(val)
+	structWrapper.TagName = "json"
+	mapOfValues := structWrapper.Map()
+	for k, v := range mapOfValues {
+		if reflectx.IsPrimitive(v) {
+			mapOfValues[k] = primitives.MustCastAway(v)
+		}
+	}
+	return mapOfValues
+}
+
 func mustEvaluate(expression string, parameter interface{}, opts ...gval.Language) any {
 	result, err := gval.Evaluate(expression, parameter, opts...)
 	if err != nil {
@@ -111,28 +139,6 @@ func mustEvaluate(expression string, parameter interface{}, opts ...gval.Languag
 	}
 	return result
 }
-
-// func shouldInclude(f Filterable) bool {
-// 	expression := getExpression(f)
-// 	print(expression)
-
-// 	return false
-// }
-
-// func getExpression(f Filterable) string {
-// 	filterableReflectValue := reflect.ValueOf(f)
-// 	if !structs.IsSlice(filterableReflectValue) {
-// 		f = []Filterable{f}
-// 	}
-// 	filterableJson := jsonx.MustMarshalToString(f)
-// 	expression := format(filterableJson)
-
-// 	return expression
-// }
-
-// func getMapOfValues(f Filterable) map[string]any {
-// 	return nil
-// }
 
 ////////////// legacy //////////////
 

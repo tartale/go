@@ -9,22 +9,12 @@ import (
 	"github.com/tartale/go/pkg/reflectx"
 )
 
-func CastTo[T, U constraintz.Primitive](val T) (U, error) {
+func CastTo[U constraintz.Primitive](val any) (U, error) {
 	var result U
 	s := fmt.Sprintf("%v", val)
 	Parse(s, &result)
 
 	return result, nil
-}
-
-func Cast[T, U constraintz.Primitive](val T, dest *U) error {
-	var result U
-	result, err := CastTo[T, U](val)
-	if err != nil {
-		return err
-	}
-	*dest = result
-	return nil
 }
 
 // CastAway takes a primitive type, figures out its
@@ -44,40 +34,48 @@ func Cast[T, U constraintz.Primitive](val T, dest *U) error {
 //
 //	// This passes because 'myPrimitive' is now a plain-old int
 //	assert.Equal(1, myPrimitive)
-func CastAway[T constraintz.Primitive](val T) (any, error) {
+func CastAway(val any) (any, error) {
 	valType := reflectx.TypeOfElement(val)
 	valKind := valType.Kind()
 	switch valKind {
 	case reflect.Bool:
-		return CastTo[T, bool](val)
+		return CastTo[bool](val)
 	case reflect.Float32:
-		return CastTo[T, float32](val)
+		return CastTo[float32](val)
 	case reflect.Float64:
-		return CastTo[T, float64](val)
+		return CastTo[float64](val)
 	case reflect.Int:
-		return CastTo[T, int](val)
+		return CastTo[int](val)
 	case reflect.Int8:
-		return CastTo[T, int8](val)
+		return CastTo[int8](val)
 	case reflect.Int16:
-		return CastTo[T, int16](val)
+		return CastTo[int16](val)
 	case reflect.Int32:
-		return CastTo[T, int32](val)
+		return CastTo[int32](val)
 	case reflect.Int64:
-		return CastTo[T, int64](val)
+		return CastTo[int64](val)
 	case reflect.Uint:
-		return CastTo[T, uint](val)
+		return CastTo[uint](val)
 	case reflect.Uint8:
-		return CastTo[T, uint8](val)
+		return CastTo[uint8](val)
 	case reflect.Uint16:
-		return CastTo[T, uint16](val)
+		return CastTo[uint16](val)
 	case reflect.Uint32:
-		return CastTo[T, uint32](val)
+		return CastTo[uint32](val)
 	case reflect.Uint64:
-		return CastTo[T, uint64](val)
+		return CastTo[uint64](val)
 	case reflect.String:
-		return CastTo[T, string](val)
+		return CastTo[string](val)
 	default:
 		err := fmt.Errorf("%w: %T", errorz.ErrInvalidType, val)
 		return nil, err
 	}
+}
+
+func MustCastAway(val any) any {
+	result, err := CastAway(val)
+	if err != nil {
+		panic(err)
+	}
+	return result
 }

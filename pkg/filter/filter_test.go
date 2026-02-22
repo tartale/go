@@ -3,8 +3,6 @@ package filter
 import (
 	"testing"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	"github.com/tartale/go/pkg/jsonx"
 )
@@ -17,10 +15,17 @@ const (
 )
 
 type Movie struct {
-	Kind        ShowKind `json:"kind"`
-	Title       string   `json:"title"`
-	Description string   `json:"description"`
-	MovieYear   int      `json:"movieYear"`
+	Kind        ShowKind `json:"kind,omitempty"`
+	Title       string   `json:"title,omitempty"`
+	Description string   `json:"description,omitempty"`
+	MovieYear   int      `json:"movieYear,omitempty"`
+}
+
+var testMovie = Movie{
+	Kind:        MOVIE,
+	Title:       "Back to the Future",
+	Description: "The time travel adventures of Doc Brown and Marty McFly",
+	MovieYear:   1985,
 }
 
 type MovieFilter struct {
@@ -32,153 +37,158 @@ type MovieFilter struct {
 	Or          []*MovieFilter `json:"or,omitempty"`
 }
 
-func TestNewTypeFilter(t *testing.T) {
-	typeFilterJsonIn := `{"kind":{"eq":"MOVIE"}}`
-	typeFilter := NewTypeFilter[Movie](typeFilterJsonIn)
+func TestNewTypeFilterFromJson(t *testing.T) {
+	typeFilterJsonIn := `[{"kind":{"eq":"MOVIE"}}]`
+	typeFilter := NewTypeFilterFromJson[Movie](typeFilterJsonIn)
 	typeFilterJsonOut := jsonx.MustMarshalToString(typeFilter)
 
 	assert.Equal(t, typeFilterJsonIn, typeFilterJsonOut)
 }
 
-func TestShouldInclude(t *testing.T) {
-	typeFilterJson := `{"kind": {"eq": "MOVIE"}}`
-	typeFilter := NewTypeFilter[Movie](typeFilterJson)
-	jsonx.MustUnmarshalFromString(typeFilterJson, &typeFilter)
-	movie := Movie{
-		Kind:        MOVIE,
-		Title:       "Back to the Future",
-		Description: "The time travel adventures of Doc Brown and Marty McFly",
-		MovieYear:   1985,
-	}
+func TestNewTypeFilterFromJson_ImpliedLogicalAndFilter(t *testing.T) {
+	typeFilterJsonIn := `[{"title":{"matches":"Back to the.*"}},{"movieYear":{"eq":1985}}]`
+	typeFilter := NewTypeFilterFromJson[Movie](typeFilterJsonIn)
+	typeFilterJsonOut := jsonx.MustMarshalToString(typeFilter)
 
-	result := typeFilter.ShouldInclude(movie)
+	assert.Equal(t, typeFilterJsonIn, typeFilterJsonOut)
+}
+
+func TestNewTypeFilterFromJson_ExplicitLogicalAndFilter(t *testing.T) {
+	typeFilterJsonIn := `[{"movieYear":{"eq":1985}},{"and":[{"title":{"matches":"Back to the.*"}}]}]`
+	typeFilter := NewTypeFilterFromJson[Movie](typeFilterJsonIn)
+	typeFilterJsonOut := jsonx.MustMarshalToString(typeFilter)
+
+	assert.Equal(t, typeFilterJsonIn, typeFilterJsonOut)
+}
+
+func TestNewTypeFilterFromJson_ComplexNestedFilter(t *testing.T) {
+	typeFilterJsonIn := `[{"movieYear":{"eq":1955}},{"or":[{"movieYear":{"eq":1985}},{"and":[{"title":{"eq":"BacktotheFuture"}}]}]}]`
+	typeFilter := NewTypeFilterFromJson[Movie](typeFilterJsonIn)
+	typeFilterJsonOut := jsonx.MustMarshalToString(typeFilter)
+
+	assert.Equal(t, typeFilterJsonIn, typeFilterJsonOut)
+}
+
+func TestShouldInclude_SimpleEnumFilter(t *testing.T) {
+	typeFilterJson := `[{"kind": {"eq": "MOVIE"}}]`
+	typeFilter := NewTypeFilterFromJson[Movie](typeFilterJson)
+
+	result := typeFilter.ShouldInclude(testMovie)
 
 	assert.True(t, result)
 }
 
-var _ = Describe("Filtering", func() {
-	Context("for syntactically correct filters", func() {
-		movie := Movie{
-			Kind:        MOVIE,
-			Title:       "Back to the Future",
-			Description: "The time travel adventures of Doc Brown and Marty McFly",
-			MovieYear:   1985,
-		}
+func TestShouldInclude_SimpleStringFilter(t *testing.T) {
+	typeFilterJson := `[{"title": {"eq": "Back to the Future"}}]`
+	typeFilter := NewTypeFilterFromJson[Movie](typeFilterJson)
 
-		DescribeTable("can be evaluated against an input that should return true",
-			func(movieFiltersJson string, movie Movie) {
-				var movieFilters []*MovieFilter
-				err := jsonx.StrictUnmarshal([]byte(movieFiltersJson), &movieFilters)
-				Expect(err).ToNot(HaveOccurred())
-			},
+	result := typeFilter.ShouldInclude(testMovie)
 
-			Entry("simple enum filter",
-				`[{"kind": {"eq": "MOVIE"}}]`,
-				movie,
-			),
-		)
-	})
-})
+	assert.True(t, result)
+}
 
-////////////// legacy //////////////
+func TestShouldInclude_SimpleNumberFilter(t *testing.T) {
+	typeFilterJson := `[{"movieYear": {"eq": 1985}}]`
+	typeFilter := NewTypeFilterFromJson[Movie](typeFilterJson)
 
-// var _ = Describe("Filtering", func() {
-// 	Context("for syntactically correct filters", func() {
-// 		movie := Movie{
-// 			Kind:        MOVIE,
-// 			Title:       "Back to the Future",
-// 			Description: "The time travel adventures of Doc Brown and Marty McFly",
-// 			MovieYear:   1985,
-// 		}
+	result := typeFilter.ShouldInclude(testMovie)
 
-// 		DescribeTable("can be evaluated against an input that should return true",
-// 			func(movieFiltersJson string, movie Movie) {
-// 				var movieFilters []*MovieFilter
-// 				err := jsonx.StrictUnmarshal([]byte(movieFiltersJson), &movieFilters)
-// 				Expect(err).ToNot(HaveOccurred())
+	assert.True(t, result)
+}
 
-// 				expression := GetExpression(movieFilters)
-// 				values := GetValues(movieFilters, movie)
-// 				eval, err := gval.Evaluate(expression, values)
+func TestShouldInclude_ImpliedLogicalAndFilter(t *testing.T) {
+	typeFilterJson := `[{"title": {"matches": "Back to the .*"}}, {"movieYear": {"eq": 1985}}]`
+	typeFilter := NewTypeFilterFromJson[Movie](typeFilterJson)
 
-// 				Expect(err).ToNot(HaveOccurred())
-// 				Expect(eval.(bool)).To(Equal(true))
-// 			},
+	result := typeFilter.ShouldInclude(testMovie)
 
-// 			Entry("simple enum filter",
-// 				`[{"kind": {"eq": "MOVIE"}}]`,
-// 				movie,
-// 			),
+	assert.True(t, result)
+}
 
-// 			Entry("simple string filter",
-// 				`[{"title": {"eq": "Back to the Future"}}]`,
-// 				movie,
-// 			),
+func TestShouldInclude_ExplicitLogicalAndFilter(t *testing.T) {
+	typeFilterJson := `[{"movieYear": {"eq": 1985}}, {"and": [{"title": {"matches": "Back to the .*"}}]}]`
+	typeFilter := NewTypeFilterFromJson[Movie](typeFilterJson)
 
-// 			Entry("simple number filter",
-// 				`[{"movieYear": {"eq": 1985}}]`,
-// 				movie,
-// 			),
+	result := typeFilter.ShouldInclude(testMovie)
 
-// 			Entry("multi-field filter with implied logical 'and'",
-// 				`[{"title": {"matches": "Back to the .*"}}, {"movieYear": {"eq": 1985}}]`,
-// 				movie,
-// 			),
+	assert.True(t, result)
+}
 
-// 			Entry("multi-field filter with explicit logical 'or'",
-// 				`[{"movieYear": {"eq": 1955}}, {"or": [{"title": {"matches": "Back to the .*"}}]}]`,
-// 				movie,
-// 			),
+func TestShouldInclude_ExplicitLogicalOrFilter(t *testing.T) {
+	typeFilterJson := `[{"movieYear": {"eq": 1955}}, {"or": [{"title": {"matches": "Back to the .*"}}]}]`
+	typeFilter := NewTypeFilterFromJson[Movie](typeFilterJson)
 
-// 			Entry("multi-field nested filter",
-// 				`[{"movieYear": {"eq": 1955}}, {"or": [{"movieYear": {"eq": 1985}}, {"and": [{"title": {"eq": "Back to the Future"}}]}]}]`,
-// 				movie,
-// 			),
-// 		)
+	result := typeFilter.ShouldInclude(testMovie)
 
-// 		DescribeTable("can be evaluated against an input that should return false",
-// 			func(movieFiltersJson string, movie Movie) {
-// 				var movieFilters []*MovieFilter
-// 				err := json.Unmarshal([]byte(movieFiltersJson), &movieFilters)
-// 				Expect(err).ToNot(HaveOccurred())
+	assert.True(t, result)
+}
 
-// 				expression := GetExpression(movieFilters)
-// 				values := GetValues(movieFilters, movie)
-// 				eval, err := gval.Evaluate(expression, values)
+func TestShouldInclude_ComplexNestedFilter(t *testing.T) {
+	typeFilterJson := `[{"movieYear": {"eq": 1955}}, {"or": [{"movieYear": {"eq": 1985}}, {"and": [{"title": {"eq": "Back to the Future"}}]}]}]`
+	typeFilter := NewTypeFilterFromJson[Movie](typeFilterJson)
 
-// 				Expect(err).ToNot(HaveOccurred())
-// 				Expect(eval.(bool)).To(Equal(false))
-// 			},
+	result := typeFilter.ShouldInclude(testMovie)
+	assert.True(t, result)
+}
 
-// 			Entry("simple enum filter",
-// 				`[{"kind": {"eq": "SERIES"}}]`,
-// 				movie,
-// 			),
+func TestShouldNotInclude_SimpleEnumFilter(t *testing.T) {
+	typeFilterJson := `[{"kind": {"eq": "SERIES"}}]`
+	typeFilter := NewTypeFilterFromJson[Movie](typeFilterJson)
 
-// 			Entry("simple string filter",
-// 				`[{"title": {"eq": "The Shawshank Redemption"}}]`,
-// 				movie,
-// 			),
+	result := typeFilter.ShouldInclude(testMovie)
 
-// 			Entry("simple number filter",
-// 				`[{"movieYear": {"eq": 1955}}]`,
-// 				movie,
-// 			),
+	assert.False(t, result)
+}
 
-// 			Entry("multi-field filter with implied logical 'and'",
-// 				`[{"movieYear": {"eq": 1955}}, {"title": {"matches": "Back to the .*"}}]`,
-// 				movie,
-// 			),
+func TestShouldNotInclude_SimpleStringFilter(t *testing.T) {
+	typeFilterJson := `[{"title": {"eq": "The Shawshank Redemption"}}]`
+	typeFilter := NewTypeFilterFromJson[Movie](typeFilterJson)
 
-// 			Entry("multi-field filter with explicit logical 'or'",
-// 				`[{"movieYear": {"eq": 1955}}, {"or": [{"title": {"matches": ".*Shawshank.*"}}]}]`,
-// 				movie,
-// 			),
+	result := typeFilter.ShouldInclude(testMovie)
 
-// 			Entry("multi-field nested filter",
-// 				`[{"movieYear": {"eq": 1955}}, {"or": [{"movieYear": {"eq": 1985}}, {"and": [{"title": {"eq": "The Shawshank Redemption"}}]}]}]`,
-// 				movie,
-// 			),
-// 		)
-// 	})
-// })
+	assert.False(t, result)
+}
+
+func TestShouldNotInclude_SimpleNumberFilter(t *testing.T) {
+	typeFilterJson := `[{"movieYear": {"eq": 1955}}]`
+	typeFilter := NewTypeFilterFromJson[Movie](typeFilterJson)
+
+	result := typeFilter.ShouldInclude(testMovie)
+
+	assert.False(t, result)
+}
+
+func TestShouldNotInclude_ImpliedLogicalAndFilter(t *testing.T) {
+	typeFilterJson := `[{"title": {"matches": "Back to the .*"}}, {"movieYear": {"eq": 1955}}]`
+	typeFilter := NewTypeFilterFromJson[Movie](typeFilterJson)
+
+	result := typeFilter.ShouldInclude(testMovie)
+
+	assert.False(t, result)
+}
+
+func TestShouldNotInclude_ExplicitLogicalAndFilter(t *testing.T) {
+	typeFilterJson := `[{"movieYear": {"eq": 1955}}, {"and": [{"title": {"matches": "Back to the .*"}}]}]`
+	typeFilter := NewTypeFilterFromJson[Movie](typeFilterJson)
+
+	result := typeFilter.ShouldInclude(testMovie)
+
+	assert.False(t, result)
+}
+
+func TestShouldNotInclude_ExplicitLogicalOrFilter(t *testing.T) {
+	typeFilterJson := `[{"movieYear": {"eq": 1955}}, {"or": [{"title": {"matches": "The Shawshank .*"}}]}]`
+	typeFilter := NewTypeFilterFromJson[Movie](typeFilterJson)
+
+	result := typeFilter.ShouldInclude(testMovie)
+
+	assert.False(t, result)
+}
+
+func TestShouldNotInclude_ComplexNestedFilter(t *testing.T) {
+	typeFilterJson := `[{"movieYear": {"eq": 1955}}, {"or": [{"movieYear": {"eq": 1985}}, {"and": [{"title": {"eq": "The Shawshank Redemption"}}]}]}]`
+	typeFilter := NewTypeFilterFromJson[Movie](typeFilterJson)
+
+	result := typeFilter.ShouldInclude(testMovie)
+	assert.False(t, result)
+}
