@@ -82,3 +82,42 @@ func IsStruct(v any) bool {
 
 	return val.Kind() == reflect.Struct
 }
+
+func TypeIsElementWrapper(t reflect.Type) bool {
+	kind := t.Kind()
+	return kind == reflect.Array ||
+		kind == reflect.Chan ||
+		kind == reflect.Map ||
+		kind == reflect.Ptr ||
+		kind == reflect.Slice
+}
+
+func ValueIsElementWrapper(v reflect.Value) bool {
+	kind := v.Kind()
+	return kind == reflect.Ptr ||
+		kind == reflect.Interface
+}
+
+// ValueOfElement drills down on the input v to get
+// the reflect.Value of the fundumental element;
+// e.g. if v is a Ptr, it will get the reflect.Value of the
+// dereferenced type of v instead.
+func ValueOfElement(v any) reflect.Value {
+	valueOf := reflect.ValueOf(v)
+	for ValueIsElementWrapper(valueOf) {
+		valueOf = valueOf.Elem()
+	}
+	return valueOf
+}
+
+// TypeOfElement drills down on the input v to get
+// the reflect.Type of the fundumental element;
+// e.g. if v is a Ptr, it will get the reflect.Type of the
+// dereferenced type of v instead.
+func TypeOfElement(v any) reflect.Type {
+	typeOf := reflect.TypeOf(v)
+	for TypeIsElementWrapper(typeOf) {
+		typeOf = typeOf.Elem()
+	}
+	return typeOf
+}
