@@ -30,7 +30,7 @@ type Operator struct {
 }
 
 type TypeFilter[T any] struct {
-	any
+	Any any
 }
 
 func NewTypeFilter[T any]() TypeFilter[T] {
@@ -82,11 +82,11 @@ func NewTypeFilterFromJson[T any](inputJson string) TypeFilter[T] {
 }
 
 func (tf TypeFilter[T]) MarshalJSON() ([]byte, error) {
-	return json.Marshal(tf.any)
+	return json.Marshal(tf.Any)
 }
 
 func (tf TypeFilter[T]) UnmarshalJSON(data []byte) error {
-	return json.Unmarshal(data, tf.any)
+	return json.Unmarshal(data, tf.Any)
 }
 
 func (tf TypeFilter[T]) ShouldInclude(val any) bool {
@@ -98,7 +98,7 @@ func (tf TypeFilter[T]) ShouldInclude(val any) bool {
 }
 
 func (tf TypeFilter[T]) GetExpression() string {
-	filterableJson := jsonx.MustMarshalToString(tf.any)
+	filterableJson := jsonx.MustMarshalToString(tf.Any)
 	expression := format(filterableJson)
 
 	return expression
