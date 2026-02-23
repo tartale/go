@@ -226,10 +226,9 @@ func TestFilterWithPredefinedType(t *testing.T) {
 	predefinedFilter := []MovieFilter{}
 	jsonx.MustUnmarshalFromString(typeFilterJson, &predefinedFilter)
 	typeFilter := TypeFilter[Movie]{predefinedFilter}
-	filteredMovies := typeFilter.Filter(slices.Values(testMovies))
-	filteredMovieValues := slices.Collect(filteredMovies)
+	filteredMovies := typeFilter.FilterAll(testMovies)
 
-	assert.Len(t, filteredMovieValues, 2)
-	assert.Equal(t, testMovies[0], filteredMovieValues[0])
-	assert.Equal(t, testMovies[2], filteredMovieValues[1])
+	assert.Len(t, filteredMovies, 2)
+	assert.Equal(t, testMovies[0], filteredMovies[0])
+	assert.Equal(t, testMovies[2], filteredMovies[1])
 }
