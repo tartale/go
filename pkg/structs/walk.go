@@ -1,6 +1,8 @@
 package structs
 
-import "reflect"
+import (
+	"reflect"
+)
 
 // WalkFn is a callback that can be used in the Walk method, below.
 // While iterating the struct's fields, the callback will be invoked
@@ -49,7 +51,7 @@ func (s *Struct) WalkValue(field reflect.StructField, val reflect.Value, fn Walk
 	return fn(field, val)
 }
 
-// handleSubStruct deals with sub-structures. If the 'flatten' tag is not set, it calls the walk function
+// WalkSubStruct deals with sub-structures. If the 'flatten' tag is not set, it calls the walk function
 // on the current field. In any case, it walks over the nested structure.
 func (s *Struct) WalkSubStruct(field reflect.StructField, val reflect.Value, fn WalkFn, flatten bool) error {
 	if !flatten {
@@ -58,11 +60,11 @@ func (s *Struct) WalkSubStruct(field reflect.StructField, val reflect.Value, fn 
 		}
 	}
 
-	if val.CanAddr() {
-		val = val.Addr()
+	if IsStruct(val) {
+		return New(val).Walk(fn)
 	}
 
-	return New(val.Interface()).Walk(fn)
+	return nil
 }
 
 // handleSlice walks over each element of the slice, if the element is a struct.

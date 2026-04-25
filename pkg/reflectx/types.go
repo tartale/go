@@ -98,6 +98,14 @@ func ValueIsElementWrapper(v reflect.Value) bool {
 		kind == reflect.Interface
 }
 
+func ValueOfInterface(v any) reflect.Value {
+	value := reflect.ValueOf(v)
+	for value.Kind() == reflect.Interface {
+		value = reflect.ValueOf(value.Interface())
+	}
+	return value
+}
+
 // ValueOfElement drills down on the input v to get
 // the reflect.Value of the fundumental element;
 // e.g. if v is a Ptr, it will get the reflect.Value of the
