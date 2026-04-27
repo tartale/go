@@ -148,7 +148,7 @@ func mustEvaluate(expression string, parameter interface{}, opts ...gval.Languag
 // gval.Evaluate function.
 func GetExpression(filter any) string {
 	filterValue := reflect.ValueOf(filter)
-	if !structs.IsSlice(filterValue) {
+	if !reflectx.IsSlice(filterValue) {
 		filter = []any{filter}
 	}
 	filterBytes, err := json.Marshal(filter)
@@ -175,7 +175,7 @@ func GetExpression(filter any) string {
 //	  values:     {kind => "MOVIE"}
 func GetValues(filter, input any) map[string]any {
 	filterValue := reflect.ValueOf(filter)
-	if !structs.IsSlice(filterValue) {
+	if !reflectx.IsSlice(filterValue) {
 		filter = []any{filter}
 	}
 

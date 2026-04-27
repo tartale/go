@@ -23,6 +23,13 @@ func TestIsNumber(t *testing.T) {
 	assert.True(t, IsNumber(IntType(1)))
 }
 
+func TestIsStruct(t *testing.T) {
+	testStruct := TestStruct{String: "hello"}
+
+	assert.True(t, IsStruct(testStruct))
+	assert.True(t, IsStruct(&testStruct))
+}
+
 func TestValueOfElement(t *testing.T) {
 	testStruct := TestStruct{String: "hello"}
 	valueOfTestStruct := reflect.ValueOf(testStruct)

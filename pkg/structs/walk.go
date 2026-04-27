@@ -2,6 +2,8 @@ package structs
 
 import (
 	"reflect"
+
+	"github.com/tartale/go/pkg/reflectx"
 )
 
 // WalkFn is a callback that can be used in the Walk method, below.
@@ -40,11 +42,11 @@ func (s *Struct) Walk(fn WalkFn) error {
 func (s *Struct) WalkValue(field reflect.StructField, val reflect.Value, fn WalkFn) error {
 	_, tagOpts := parseTag(field.Tag.Get(s.TagName))
 
-	if !tagOpts.Has("omitnested") && IsSubStruct(val) {
+	if !tagOpts.Has("omitnested") && reflectx.IsStruct(val.Interface()) {
 		return s.WalkSubStruct(field, val, fn, tagOpts.Has("flatten"))
 	}
 
-	if IsSlice(val) {
+	if reflectx.IsSlice(val.Interface()) {
 		return s.WalkSlice(val, fn)
 	}
 
@@ -60,14 +62,10 @@ func (s *Struct) WalkSubStruct(field reflect.StructField, val reflect.Value, fn 
 		}
 	}
 
-	if IsStruct(val) {
-		return New(val).Walk(fn)
-	}
-
-	return nil
+	return New(val.Interface()).Walk(fn)
 }
 
-// handleSlice walks over each element of the slice, if the element is a struct.
+// WalkSlice walks over each element of the slice, if the element is a struct.
 func (s *Struct) WalkSlice(val reflect.Value, fn WalkFn) error {
 	for i := 0; i < val.Len(); i++ {
 		v := val.Index(i)
@@ -80,7 +78,7 @@ func (s *Struct) WalkSlice(val reflect.Value, fn WalkFn) error {
 			v = v.Addr()
 		}
 
-		if IsStruct(v.Interface()) {
+		if reflectx.IsStruct(v.Interface()) {
 			if err := New(v.Interface()).Walk(fn); err != nil {
 				return err
 			}
@@ -88,32 +86,4 @@ func (s *Struct) WalkSlice(val reflect.Value, fn WalkFn) error {
 	}
 
 	return nil
-}
-
-func IsSubStruct(val reflect.Value) bool {
-	v := reflect.ValueOf(val.Interface())
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-
-	switch v.Kind() {
-	case reflect.Struct:
-		return true
-	}
-
-	return false
-}
-
-func IsSlice(val reflect.Value) bool {
-	v := reflect.ValueOf(val.Interface())
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-
-	switch v.Kind() {
-	case reflect.Slice:
-		return true
-	}
-
-	return false
 }

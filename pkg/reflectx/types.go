@@ -54,33 +54,13 @@ func IsPrimitive(v any) bool {
 }
 
 // IsSlice reports whether v is a slice or pointer to a slice.
-//
-// Example:
-//
-//	reflectx.IsSlice([]int{1, 2, 3})    // true
-//	reflectx.IsSlice(&[]string{"a","b"}) // true
 func IsSlice(v any) bool {
-	val := reflect.ValueOf(v)
-	if val.Kind() == reflect.Ptr {
-		val = val.Elem()
-	}
-
-	switch val.Kind() {
-	case reflect.Slice:
-		return true
-	}
-
-	return false
+	return ValueOfElement(v).Kind() == reflect.Slice
 }
 
 // IsStruct reports whether v is a struct or pointer to a struct.
 func IsStruct(v any) bool {
-	val := reflect.ValueOf(v)
-	if val.Kind() == reflect.Ptr {
-		val = val.Elem()
-	}
-
-	return val.Kind() == reflect.Struct
+	return ValueOfElement(v).Kind() == reflect.Struct
 }
 
 func TypeIsElementWrapper(t reflect.Type) bool {
@@ -101,31 +81,26 @@ func ValueIsElementWrapper(v reflect.Value) bool {
 func ValueOfInterface(v any) reflect.Value {
 	value := reflect.ValueOf(v)
 	for value.Kind() == reflect.Interface {
-		value = reflect.ValueOf(value.Interface())
+		value = value.Elem()
 	}
 	return value
 }
 
 // ValueOfElement drills down on the input v to get
 // the reflect.Value of the fundumental element;
-// e.g. if v is a Ptr, it will get the reflect.Value of the
+// For example, if v is a Ptr, it will get the reflect.Value of the
 // dereferenced type of v instead.
 func ValueOfElement(v any) reflect.Value {
 	value := reflect.ValueOf(v)
-	for value.Kind() == reflect.Ptr || value.Kind() == reflect.Interface {
-		if value.Kind() == reflect.Ptr {
-			value = value.Elem()
-		}
-		if value.Kind() == reflect.Interface {
-			value = reflect.ValueOf(value.Interface())
-		}
+	for ValueIsElementWrapper(value) {
+		value = value.Elem()
 	}
 	return value
 }
 
 // TypeOfElement drills down on the input v to get
 // the reflect.Type of the fundumental element;
-// e.g. if v is a Ptr, it will get the reflect.Type of the
+// For example, if v is a Ptr, it will get the reflect.Type of the
 // dereferenced type of v instead.
 func TypeOfElement(v any) reflect.Type {
 	typeOf := reflect.TypeOf(v)
