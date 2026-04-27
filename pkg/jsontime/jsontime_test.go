@@ -13,13 +13,13 @@ type TestStruct struct {
 }
 
 type TestNestedStruct struct {
-	Foo    string     `json:"foo,omitempty"`
-	Nested TestStruct `json:"nested,omitempty"`
+	Foo    string      `json:"foo,omitempty"`
+	Nested *TestStruct `json:"nested,omitempty"`
 }
 
 type TestStructWithAnyField struct {
-	Foo    any        `json:"foo,omitempty"`
-	Nested TestStruct `json:"nested,omitempty"`
+	Foo    any         `json:"foo,omitempty"`
+	Nested *TestStruct `json:"nested,omitempty"`
 }
 
 type TestStructWithNestedAnyField struct {
@@ -33,7 +33,6 @@ type TestStructWithSliceField struct {
 }
 
 func TestMarshalTime(t *testing.T) {
-
 	myTime, _ := time.Parse(time.RFC3339, "1976-07-31T14:30:00Z")
 	jsonTime := New(myTime)
 	testStruct := TestStruct{}
@@ -45,10 +44,9 @@ func TestMarshalTime(t *testing.T) {
 }
 
 func TestMarshalTime_NestedStruct(t *testing.T) {
-
 	myTime, _ := time.Parse(time.RFC3339, "1976-07-31T14:30:00Z")
 	jsonTime := New(myTime)
-	testStruct := TestNestedStruct{}
+	testStruct := TestNestedStruct{Nested: &TestStruct{}}
 	testStruct.Nested.Bar = *jsonTime
 
 	MarshalTime(&testStruct)
@@ -57,10 +55,9 @@ func TestMarshalTime_NestedStruct(t *testing.T) {
 }
 
 func TestMarshalTime_AnyField(t *testing.T) {
-
 	myTime, _ := time.Parse(time.RFC3339, "1976-07-31T14:30:00Z")
 	jsonTime := New(myTime)
-	testStruct := TestStructWithAnyField{}
+	testStruct := TestStructWithAnyField{Nested: &TestStruct{}}
 	testStruct.Nested.Bar = *jsonTime
 
 	MarshalTime(&testStruct)
@@ -68,7 +65,6 @@ func TestMarshalTime_AnyField(t *testing.T) {
 }
 
 func TestMarshalTime_NestedAnyField(t *testing.T) {
-
 	myTime, _ := time.Parse(time.RFC3339, "1976-07-31T14:30:00Z")
 	jsonTime := New(myTime)
 
@@ -82,7 +78,6 @@ func TestMarshalTime_NestedAnyField(t *testing.T) {
 }
 
 func TestMarshalTime_SliceField(t *testing.T) {
-
 	myTime, _ := time.Parse(time.RFC3339, "1976-07-31T14:30:00Z")
 	jsonTime := New(myTime)
 	item := TestStruct{}
@@ -97,7 +92,6 @@ func TestMarshalTime_SliceField(t *testing.T) {
 }
 
 func TestUnmarshalTime(t *testing.T) {
-
 	testStruct := TestStruct{}
 	testStruct.Bar.Raw = "1976-07-31"
 
@@ -109,8 +103,7 @@ func TestUnmarshalTime(t *testing.T) {
 }
 
 func TestUnmarshalTime_NestedStruct(t *testing.T) {
-
-	testStruct := TestNestedStruct{}
+	testStruct := TestNestedStruct{Nested: &TestStruct{}}
 	testStruct.Nested.Bar.Raw = "1976-07-31"
 
 	UnmarshalTime(&testStruct)
@@ -121,8 +114,7 @@ func TestUnmarshalTime_NestedStruct(t *testing.T) {
 }
 
 func TestUnmarshalTime_AnyField(t *testing.T) {
-
-	testStruct := TestStructWithAnyField{}
+	testStruct := TestStructWithAnyField{Nested: &TestStruct{}}
 	testStruct.Nested.Bar.Raw = "1976-07-31"
 
 	UnmarshalTime(&testStruct)
@@ -133,7 +125,6 @@ func TestUnmarshalTime_AnyField(t *testing.T) {
 }
 
 func TestUnmarshalTime_NestedAnyField(t *testing.T) {
-
 	testStruct := TestStructWithNestedAnyField{}
 	nestedStruct := TestStruct{}
 	nestedStruct.Bar.Raw = "1976-07-31"
@@ -148,7 +139,6 @@ func TestUnmarshalTime_NestedAnyField(t *testing.T) {
 }
 
 func TestJSONTime_JSONMarshal(t *testing.T) {
-
 	myTime, _ := time.Parse(time.RFC3339, "1976-07-31T14:30:00Z")
 	jsonTime := Time{Time: myTime}
 	testStruct := TestStruct{Foo: "foo", Bar: jsonTime}
@@ -160,11 +150,10 @@ func TestJSONTime_JSONMarshal(t *testing.T) {
 }
 
 func TestJSONTime_JSONMarshal_AnyField(t *testing.T) {
-
 	myTime, _ := time.Parse(time.RFC3339, "1976-07-31T14:30:00Z")
 	jsonTime := Time{Time: myTime}
 	testStruct := TestStruct{Foo: "foo", Bar: jsonTime}
-	testStructWithAnyField := TestStructWithAnyField{"foo", testStruct}
+	testStructWithAnyField := TestStructWithAnyField{"foo", &testStruct}
 
 	testJson, err := MarshalJSON(&testStructWithAnyField)
 
@@ -173,7 +162,6 @@ func TestJSONTime_JSONMarshal_AnyField(t *testing.T) {
 }
 
 func TestJSONTime_JSONMarshal_NestedAnyField(t *testing.T) {
-
 	myTime, _ := time.Parse(time.RFC3339, "1976-07-31T14:30:00Z")
 	jsonTime := Time{Time: myTime}
 	testStruct := TestStruct{Foo: "foo", Bar: jsonTime}
@@ -186,7 +174,6 @@ func TestJSONTime_JSONMarshal_NestedAnyField(t *testing.T) {
 }
 
 func TestJSONTime_JSONUnmarshal(t *testing.T) {
-
 	testJson := `{"foo":"foo","bar":"1976-07-31"}`
 	testStruct := TestStruct{}
 
@@ -198,7 +185,6 @@ func TestJSONTime_JSONUnmarshal(t *testing.T) {
 }
 
 func TestJSONTime_JSONUnmarshal_AnyField(t *testing.T) {
-
 	testJson := `{"foo":"foo","nested":{"foo":"foo","bar":"1976-07-31"}}`
 	testStructWithAnyField := TestStructWithAnyField{}
 
@@ -212,7 +198,6 @@ func TestJSONTime_JSONUnmarshal_AnyField(t *testing.T) {
 }
 
 func TestJSONTime_JSONUnmarshal_NestedAnyField(t *testing.T) {
-
 	testJson := `{"foo":"foo","nested":{"foo":"foo","bar":"1976-07-31"}}`
 	testStructWithNestedAnyField := TestStructWithNestedAnyField{Nested: &TestStruct{}}
 

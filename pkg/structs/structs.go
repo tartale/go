@@ -17,6 +17,7 @@ var DefaultTagName = "structs" // struct's field default tag name
 // around the struct.
 type Struct struct {
 	raw                   any
+	reflectValue          reflect.Value
 	reflectTypeOfElement  reflect.Type
 	reflectValueOfElement reflect.Value
 	TagName               string
@@ -25,13 +26,15 @@ type Struct struct {
 // New returns a new *Struct with the struct s. It panics if the s's kind is
 // not struct.
 func New(s any) *Struct {
-	reflectValueOfElement := reflectx.ValueOfElement(s)
-	if reflectValueOfElement.Kind() != reflect.Struct {
-		panic(fmt.Sprintf("not struct: %s", reflectValueOfElement.Kind()))
+	if !reflectx.IsStruct(s) {
+		panic(fmt.Sprintf("not a struct: %T", s))
 	}
+	reflectValue := reflect.ValueOf(s)
+	reflectValueOfElement := reflectx.ValueOfElement(s)
 	reflectTypeOfElement := reflectx.TypeOfElement(s)
 	return &Struct{
 		raw:                   s,
+		reflectValue:          reflectValue,
 		reflectTypeOfElement:  reflectTypeOfElement,
 		reflectValueOfElement: reflectValueOfElement,
 		TagName:               DefaultTagName,
@@ -206,7 +209,7 @@ func (s *Struct) Values() []any {
 			continue
 		}
 
-		if IsStruct(val.Interface()) && !tagOpts.Has("omitnested") {
+		if reflectx.IsStruct(val.Interface()) && !tagOpts.Has("omitnested") {
 			// look out for embedded structs, and convert them to a
 			// []any to be added to the final values slice
 			t = append(t, Values(val.Interface())...)
@@ -329,7 +332,7 @@ func (s *Struct) IsZero() bool {
 
 		_, tagOpts := parseTag(field.Tag.Get(s.TagName))
 
-		if IsStruct(val.Interface()) && !tagOpts.Has("omitnested") {
+		if reflectx.IsStruct(val.Interface()) && !tagOpts.Has("omitnested") {
 			ok := IsZero(val.Interface())
 			if !ok {
 				return false
@@ -376,7 +379,7 @@ func (s *Struct) HasZero() bool {
 
 		_, tagOpts := parseTag(field.Tag.Get(s.TagName))
 
-		if IsStruct(val.Interface()) && !tagOpts.Has("omitnested") {
+		if reflectx.IsStruct(val.Interface()) && !tagOpts.Has("omitnested") {
 			ok := HasZero(val.Interface())
 			if ok {
 				return true
@@ -473,22 +476,6 @@ func IsZero(s any) bool {
 // refer to Struct types HasZero() method.  It panics if s's kind is not struct.
 func HasZero(s any) bool {
 	return New(s).HasZero()
-}
-
-// IsStruct returns true if the given variable is a struct or a pointer to
-// struct.
-func IsStruct(s any) bool {
-	v := reflect.ValueOf(s)
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-
-	// uninitialized zero value of a struct
-	if v.Kind() == reflect.Invalid {
-		return false
-	}
-
-	return v.Kind() == reflect.Struct
 }
 
 // Name returns the structs's type name within its package. It returns an

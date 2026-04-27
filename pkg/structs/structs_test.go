@@ -680,18 +680,6 @@ func TestFillMap_Nil(t *testing.T) {
 	FillMap(T, nil)
 }
 
-func TestStruct(t *testing.T) {
-	T := struct{}{}
-
-	if !IsStruct(T) {
-		t.Errorf("T should be a struct, got: %T", T)
-	}
-
-	if !IsStruct(&T) {
-		t.Errorf("T should be a struct, got: %T", T)
-	}
-}
-
 func TestValues(t *testing.T) {
 	T := struct {
 		A string
