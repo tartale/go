@@ -2,9 +2,7 @@ package structs
 
 import (
 	"encoding/json"
-	"iter"
 	"reflect"
-	"slices"
 
 	"github.com/tartale/go/pkg/filter"
 	"github.com/tartale/go/pkg/jsonx"
@@ -106,47 +104,6 @@ func (df DynamicFilter[T]) ShouldInclude(val any) bool {
 	return eval.(bool)
 }
 
-// GetExpression turns the JSON representation of this
-// DynamicFilter object into a boolean expression that can
-// be used in the "gval.Evaluate" library. For example,
-// if the JSON of the DynamicFilter object looks something
-// like this:
-//
-//	`[{"kind": {"eq": "MOVIE"}}]`
-//
-// then the equivalent expression will be something like this:
-//
-//	`(kind == "MOVIE")`
-//
-// Note that, due to the simplistic nature of the conversion,
-// there may be innocuous artififacts in the resulting
-// expression, such as extra unnecessary parentheses. However,
-// the expression will be usable and correct.
 func (df DynamicFilter[T]) GetExpression() string {
-	filterableJson := jsonx.MustMarshalToString(df.Any)
-	expression := filter.Format(filterableJson)
-
-	return expression
-}
-
-// Filter takes a sequence iterator to the filtered type T, and returns
-// an iterator function that can be applied to that input sequence.
-func (df DynamicFilter[T]) Filter(vals iter.Seq[T]) iter.Seq[T] {
-	return func(yield func(T) bool) {
-		for v := range vals {
-			if !df.ShouldInclude(v) {
-				continue
-			}
-			if !yield(v) {
-				break
-			}
-		}
-	}
-}
-
-// FilterAll is a wrapper around Filter that
-// accepts and returns slices instead of iterators.
-func (df DynamicFilter[T]) FilterAll(vals []T) []T {
-	filterVals := df.Filter(slices.Values(vals))
-	return slices.Collect(filterVals)
+	return filter.GetExpression(df.Any)
 }

@@ -6,11 +6,18 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/PaesslerAG/gval"
 	"github.com/tartale/go/pkg/jsonx"
 )
 
 var quotedFields = regexp.MustCompile(`"(\w+)":`)
+
+type Filterer interface {
+	ShouldInclude(val any) bool
+}
+
+type FiltererOf[T any] interface {
+	ShouldInclude(val T) bool
+}
 
 type Operator struct {
 	Eq      any `json:"eq,omitempty"`
@@ -20,16 +27,6 @@ type Operator struct {
 	Lt      any `json:"lt,omitempty"`
 	Gt      any `json:"gt,omitempty"`
 	Matches any `json:"matches,omitempty"`
-}
-
-// mustEvaluate is a wrapper around the gval.Evaluate function
-// that panics if an error is returned.
-func MustEvaluate(expression string, parameter any, opts ...gval.Language) any {
-	result, err := gval.Evaluate(expression, parameter, opts...)
-	if err != nil {
-		panic(err)
-	}
-	return result
 }
 
 // GetExpression turns the JSON representation of the
@@ -68,10 +65,10 @@ func Format(expression string) string {
 
 // Filter takes a sequence iterator to the filtered type T, and returns
 // an iterator function that can be applied to that input sequence.
-func Filter(vals iter.Seq[T]) iter.Seq[T] {
-	return func(yield func(T) bool) {
+func Filter(f Filterer, vals iter.Seq[any]) iter.Seq[any] {
+	return func(yield func(any) bool) {
 		for v := range vals {
-			if !df.ShouldInclude(v) {
+			if !f.ShouldInclude(v) {
 				continue
 			}
 			if !yield(v) {
@@ -83,8 +80,8 @@ func Filter(vals iter.Seq[T]) iter.Seq[T] {
 
 // FilterAll is a wrapper around Filter that
 // accepts and returns slices instead of iterators.
-func (df DynamicFilter[T]) FilterAll(vals []T) []T {
-	filterVals := df.Filter(slices.Values(vals))
+func FilterAll(f Filterer, vals []any) []any {
+	filterVals := Filter(f, slices.Values(vals))
 	return slices.Collect(filterVals)
 }
 
