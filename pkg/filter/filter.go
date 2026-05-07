@@ -1,15 +1,23 @@
 package filter
 
 import (
+	"fmt"
 	"iter"
+	"maps"
+	"reflect"
 	"regexp"
 	"slices"
 	"strings"
 
 	"github.com/tartale/go/pkg/jsonx"
+	"github.com/tartale/go/pkg/reflectx"
+	"github.com/tartale/go/pkg/structs"
 )
 
-var quotedFields = regexp.MustCompile(`"(\w+)":`)
+var (
+	quotedFields = regexp.MustCompile(`"(\w+)":`)
+	typeOfString = reflect.TypeFor[string]()
+)
 
 type Filterer interface {
 	ShouldInclude(val any) bool
@@ -45,11 +53,42 @@ type Operator struct {
 // there may be innocuous artififacts in the resulting
 // expression, such as extra unnecessary parentheses. However,
 // the expression will be usable and correct.
-func GetExpression(obj any) string {
-	filterableJson := jsonx.MustMarshalToString(obj)
-	expression := Format(filterableJson)
+func GetExpression(filter any) string {
+	filterValue := reflect.ValueOf(filter)
+	if !reflectx.IsSlice(filterValue) {
+		filter = []any{filter}
+	}
+	filterJson := jsonx.MustMarshalToString(filter)
+	expression := Format(filterJson)
 
 	return expression
+}
+
+// GetValues turns an input object into a map of field names
+// to values that can be fed into the gval.Evaluate function.
+//
+// The resulting map only has keys that are part of the passed
+// filter object.
+//
+// Example:
+//
+//		filter:     {kind: {eq: "SERIES"}}
+//		input:      {kind: "MOVIE", title: "Back to the Future"}
+//	  values:     {kind => "MOVIE"}
+func GetValues(filter, input any) map[string]any {
+	filterValue := reflect.ValueOf(filter)
+	if !reflectx.IsSlice(filterValue) {
+		filter = []any{filter}
+	}
+
+	values := map[string]any{}
+	for i := 0; i < filterValue.Len(); i++ {
+		f := filterValue.Index(i).Interface()
+		v := getValues(f, input)
+		maps.Copy(values, v)
+	}
+
+	return values
 }
 
 // Format does the full conversion of a JSON string into
@@ -139,4 +178,34 @@ func replaceLogicOperators(s string) string {
 		`,(and`, ` && (`,
 		`,`, ` && `,
 	).Replace(s)
+}
+
+func getValues(filter, input any) map[string]any {
+	values := map[string]any{}
+	filterWalkFn := func(filterField reflect.StructField, filterValue reflect.Value) error {
+		if filterValue.IsNil() {
+			return nil
+		}
+		switch filterValue.Interface().(type) {
+		case *Operator:
+
+			inputField, ok := structs.New(input).FieldOk(filterField.Name)
+			if !ok {
+				panic(fmt.Errorf("filter contains a field that is not in the input: %s", filterField.Name))
+			}
+			inputFieldName := inputField.TagRoot("json")
+			inputFieldValue := inputField.Value()
+			inputFieldReflectValue := reflect.ValueOf(inputFieldValue)
+			if inputFieldReflectValue.Kind() == reflect.String {
+				inputFieldValue = inputFieldReflectValue.Convert(typeOfString).Interface()
+			}
+			values[inputFieldName] = inputFieldValue
+		}
+
+		return nil
+	}
+
+	structs.Walk(filter, filterWalkFn)
+
+	return values
 }

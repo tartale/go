@@ -1,15 +1,15 @@
-package structs
+package filter
 
 import (
 	"encoding/json"
 	"reflect"
 
-	"github.com/tartale/go/pkg/filter"
 	"github.com/tartale/go/pkg/jsonx"
 	"github.com/tartale/go/pkg/maps"
+	"github.com/tartale/go/pkg/structs"
 )
 
-var typeOfOperator = reflect.TypeFor[*filter.Operator]()
+var typeOfOperator = reflect.TypeFor[*Operator]()
 
 // DynamicFilter is an object that allows a caller to
 // filter a list of objects by their fields, using a
@@ -33,7 +33,7 @@ func NewDynamicFilter[T any]() DynamicFilter[T] {
 		return nil
 	}
 	var t T
-	structWrapper := New(t)
+	structWrapper := structs.New(t)
 	structWrapper.TagName = "json"
 	structWrapper.Walk(filterWalkFn)
 	newStructType := reflect.StructOf(newFields)
@@ -95,15 +95,15 @@ func (df DynamicFilter[T]) UnmarshalJSON(data []byte) error {
 // whether it passes the DynamicFilter for type T.
 func (df DynamicFilter[T]) ShouldInclude(val any) bool {
 	expression := df.GetExpression()
-	structWrapper := New(val)
+	structWrapper := structs.New(val)
 	structWrapper.TagName = "json"
 	mapOfValues := structWrapper.Map()
 	mapOfValues = maps.CastPrimitives(mapOfValues)
-	eval := filter.MustEvaluate(expression, mapOfValues)
+	eval := MustEvaluate(expression, mapOfValues)
 
 	return eval.(bool)
 }
 
 func (df DynamicFilter[T]) GetExpression() string {
-	return filter.GetExpression(df.Any)
+	return GetExpression(df.Any)
 }
