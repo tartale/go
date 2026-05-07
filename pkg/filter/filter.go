@@ -55,7 +55,7 @@ type Operator struct {
 // the expression will be usable and correct.
 func GetExpression(filter any) string {
 	filterValue := reflect.ValueOf(filter)
-	if !reflectx.IsSlice(filterValue) {
+	if !reflectx.IsSlice(filterValue.Interface()) {
 		filter = []any{filter}
 	}
 	filterJson := jsonx.MustMarshalToString(filter)
