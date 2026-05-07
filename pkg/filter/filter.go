@@ -79,6 +79,7 @@ func GetValues(filter, input any) map[string]any {
 	filterValue := reflect.ValueOf(filter)
 	if !reflectx.IsSlice(filterValue) {
 		filter = []any{filter}
+		filterValue = reflect.ValueOf(filter)
 	}
 
 	values := map[string]any{}
@@ -117,10 +118,30 @@ func Filter(f Filterer, vals iter.Seq[any]) iter.Seq[any] {
 	}
 }
 
+// FilterFor is the generics-compatible version of Filter.
+func FilterFor[T any](f Filterer, vals iter.Seq[T]) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		for v := range vals {
+			if !f.ShouldInclude(v) {
+				continue
+			}
+			if !yield(v) {
+				break
+			}
+		}
+	}
+}
+
 // FilterAll is a wrapper around Filter that
 // accepts and returns slices instead of iterators.
 func FilterAll(f Filterer, vals []any) []any {
 	filterVals := Filter(f, slices.Values(vals))
+	return slices.Collect(filterVals)
+}
+
+// FilterForAll is the generics-compatible version of FilterAll.
+func FilterForAll[T any](f Filterer, vals []T) []T {
+	filterVals := FilterFor(f, slices.Values(vals))
 	return slices.Collect(filterVals)
 }
 

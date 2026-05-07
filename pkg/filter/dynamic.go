@@ -94,7 +94,7 @@ func (df DynamicFilter[T]) UnmarshalJSON(data []byte) error {
 // ShouldInclude accepts an object of type T and determines
 // whether it passes the DynamicFilter for type T.
 func (df DynamicFilter[T]) ShouldInclude(val any) bool {
-	expression := df.GetExpression()
+	expression := GetExpression(df.Any)
 	structWrapper := structs.New(val)
 	structWrapper.TagName = "json"
 	mapOfValues := structWrapper.Map()
@@ -102,8 +102,4 @@ func (df DynamicFilter[T]) ShouldInclude(val any) bool {
 	eval := MustEvaluate(expression, mapOfValues)
 
 	return eval.(bool)
-}
-
-func (df DynamicFilter[T]) GetExpression() string {
-	return GetExpression(df.Any)
 }
