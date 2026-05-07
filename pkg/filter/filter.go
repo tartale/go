@@ -79,7 +79,6 @@ func GetValues(filter, input any) map[string]any {
 	filterValue := reflect.ValueOf(filter)
 	if !reflectx.IsSlice(filterValue) {
 		filter = []any{filter}
-		filterValue = reflect.ValueOf(filter)
 	}
 
 	values := map[string]any{}

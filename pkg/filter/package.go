@@ -24,16 +24,16 @@ package filter
 //
 // 		movies := GetAllMovies()
 //
-// 		movieFil ter := NewDynamicFilter[Movie]
+// 		structFilter := NewDynamicFilter[Movie]
 // 		movieFilterJson := `[{"title": {"eq": "Back to the Future"}}]`
 //		jsonx.MustUnmarshalFromString(movieFilterJson, &movieFilter)
-// 		filteredMovies := dynamicFilter.Filter(slices.Values(movies))
+// 		filteredMovies := structFilter.Filter(slices.Values(movies))
 // 		filteredMovieValues := slices.Collect(filteredMovies)
 //
 // Note: there is also a convenience function to create and populate
 // the filter in one step:
 //
-//    movieFilter := NewDynamicFilterFromJson[Movie](`[{"title": {"eq": "Interstellar"}}]`)
+//    movieFilter := NewDynamicFilter[Movie](`[{"title": {"eq": "Interstellar"}}]`)
 //
 // The JSON expression operators (e.g. "eq") are defined in the filter.Operator
 // struct. You can also create compound filters (using "and" and "or" operators).

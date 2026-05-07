@@ -11,17 +11,56 @@ import (
 
 var typeOfOperator = reflect.TypeFor[*Operator]()
 
-// DynamicFilter is an object that allows a caller to
+// StructFilter is an object that allows a caller to
 // filter a list of objects by their fields, using a
 // JSON-compatible expression language.
-type DynamicFilter[T any] struct {
+type StructFilter[T any] struct {
 	Any any
 }
 
-// NewDynamicFilter creates a dynamic struct that mirrors
+// NewDynamicFilter creates a struct filter that mirrors
 // the input type T, and can be used for filtering
 // lists of objects of type T by the fields of T.
-func NewDynamicFilter[T any]() DynamicFilter[T] {
+// The inputJson string is the expression that
+// will be used to evaluate inclusion of an item of type T.
+func NewDynamicFilter[T any](inputJson string) StructFilter[T] {
+	structFilter := newStructFilter[T]()
+	jsonx.MustUnmarshalFromString(inputJson, &structFilter)
+
+	return structFilter
+}
+
+// MarshalJSON overrides the default JSON marshal function
+// so that the inner type is marshalled instead of the
+// StructFilter outer wrapper.
+func (df StructFilter[T]) MarshalJSON() ([]byte, error) {
+	return json.Marshal(df.Any)
+}
+
+// UnmarshalJSON overrides the default JSON unmarshal function
+// so that the inner type is unmarshalled instead of the
+// StructFilter outer wrapper.
+func (df StructFilter[T]) UnmarshalJSON(data []byte) error {
+	return json.Unmarshal(data, df.Any)
+}
+
+// ShouldInclude accepts an object of type T and determines
+// whether it passes the StructFilter for type T.
+func (df StructFilter[T]) ShouldInclude(val any) bool {
+	expression := GetExpression(df.Any)
+	structWrapper := structs.New(val)
+	structWrapper.TagName = "json"
+	mapOfValues := structWrapper.Map()
+	mapOfValues = maps.CastPrimitives(mapOfValues)
+	eval := MustEvaluate(expression, mapOfValues)
+
+	return eval.(bool)
+}
+
+// newStructFilter creates a struct filter that mirrors
+// the input type T, and can be used for filtering
+// lists of objects of type T by the fields of T.
+func newStructFilter[T any]() StructFilter[T] {
 	// Walk the input struct and make a new struct that
 	// has all same field names, but with the type *Operator
 	// instead of the original type.
@@ -38,9 +77,9 @@ func NewDynamicFilter[T any]() DynamicFilter[T] {
 	structWrapper.Walk(filterWalkFn)
 	newStructType := reflect.StructOf(newFields)
 	sliceOfNewStructType := reflect.SliceOf(newStructType)
-	// Each DynamicFilter has two additional fields "And" and "Or"
-	// of type []DynamicFilter; these provide the ability for
-	// the DynamicFilter to represent compound boolean expressions.
+	// Each StructFilter has two additional fields "And" and "Or"
+	// of type []StructFilter; these provide the ability for
+	// the StructFilter to represent compound boolean expressions.
 	andType := reflect.StructField{
 		Name: "And",
 		Type: sliceOfNewStructType,
@@ -62,44 +101,7 @@ func NewDynamicFilter[T any]() DynamicFilter[T] {
 	newFields[len(newFields)-1].Type = sliceOfNewStructType
 	newStructType = reflect.StructOf(newFields)
 	sliceOfNewStructType = reflect.SliceOf(newStructType)
-	dynamicFilter := DynamicFilter[T]{reflect.New(sliceOfNewStructType).Interface()}
+	structFilter := StructFilter[T]{reflect.New(sliceOfNewStructType).Interface()}
 
-	return dynamicFilter
-}
-
-// NewDynamicFilterFromJson is a convenience method to create a dynamic
-// DynamicFilter struct, and instantiate an object of that type
-// with the provided JSON string.
-func NewDynamicFilterFromJson[T any](inputJson string) DynamicFilter[T] {
-	dynamicFilter := NewDynamicFilter[T]()
-	jsonx.MustUnmarshalFromString(inputJson, &dynamicFilter)
-
-	return dynamicFilter
-}
-
-// MarshalJSON overrides the default JSON marshal function
-// so that the inner type is marshalled instead of the
-// DynamicFilter outer wrapper.
-func (df DynamicFilter[T]) MarshalJSON() ([]byte, error) {
-	return json.Marshal(df.Any)
-}
-
-// UnmarshalJSON overrides the default JSON unmarshal function
-// so that the inner type is unmarshalled instead of the
-// DynamicFilter outer wrapper.
-func (df DynamicFilter[T]) UnmarshalJSON(data []byte) error {
-	return json.Unmarshal(data, df.Any)
-}
-
-// ShouldInclude accepts an object of type T and determines
-// whether it passes the DynamicFilter for type T.
-func (df DynamicFilter[T]) ShouldInclude(val any) bool {
-	expression := GetExpression(df.Any)
-	structWrapper := structs.New(val)
-	structWrapper.TagName = "json"
-	mapOfValues := structWrapper.Map()
-	mapOfValues = maps.CastPrimitives(mapOfValues)
-	eval := MustEvaluate(expression, mapOfValues)
-
-	return eval.(bool)
+	return structFilter
 }
