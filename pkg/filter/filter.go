@@ -102,7 +102,7 @@ func Format(expression string) string {
 	return expression
 }
 
-// Filter takes a sequence iterator to the filtered type T, and returns
+// Filter takes a sequence iterator and returns
 // an iterator function that can be applied to that input sequence.
 func Filter(f Filterer, vals iter.Seq[any]) iter.Seq[any] {
 	return func(yield func(any) bool) {
