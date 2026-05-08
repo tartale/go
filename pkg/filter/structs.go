@@ -18,12 +18,12 @@ type StructFilter[T any] struct {
 	Any any
 }
 
-// NewDynamicFilter creates a struct filter that mirrors
+// NewStructFilter creates a struct filter that mirrors
 // the input type T, and can be used for filtering
 // lists of objects of type T by the fields of T.
 // The inputJson string is the expression that
 // will be used to evaluate inclusion of an item of type T.
-func NewDynamicFilter[T any](inputJson string) StructFilter[T] {
+func NewStructFilter[T any](inputJson string) StructFilter[T] {
 	structFilter := newStructFilter[T]()
 	jsonx.MustUnmarshalFromString(inputJson, &structFilter)
 

@@ -8,40 +8,40 @@ import (
 )
 
 func TestNewStructFilter(t *testing.T) {
-	dynamicFilterJsonIn := `[{"kind":{"eq":"MOVIE"}}]`
-	structFilter := NewDynamicFilter[Movie](dynamicFilterJsonIn)
-	dynamicFilterJsonOut := jsonx.MustMarshalToString(structFilter)
+	structFilterJsonIn := `[{"kind":{"eq":"MOVIE"}}]`
+	structFilter := NewStructFilter[Movie](structFilterJsonIn)
+	structFilterJsonOut := jsonx.MustMarshalToString(structFilter)
 
-	assert.Equal(t, dynamicFilterJsonIn, dynamicFilterJsonOut)
+	assert.Equal(t, structFilterJsonIn, structFilterJsonOut)
 }
 
 func TestNewStructFilter_ImpliedLogicalAndFilter(t *testing.T) {
-	dynamicFilterJsonIn := `[{"title":{"matches":"Back to the.*"}},{"movieYear":{"eq":1985}}]`
-	structFilter := NewDynamicFilter[Movie](dynamicFilterJsonIn)
-	dynamicFilterJsonOut := jsonx.MustMarshalToString(structFilter)
+	structFilterJsonIn := `[{"title":{"matches":"Back to the.*"}},{"movieYear":{"eq":1985}}]`
+	structFilter := NewStructFilter[Movie](structFilterJsonIn)
+	structFilterJsonOut := jsonx.MustMarshalToString(structFilter)
 
-	assert.Equal(t, dynamicFilterJsonIn, dynamicFilterJsonOut)
+	assert.Equal(t, structFilterJsonIn, structFilterJsonOut)
 }
 
 func TestNewStructFilter_ExplicitLogicalAndFilter(t *testing.T) {
-	dynamicFilterJsonIn := `[{"movieYear":{"eq":1985}},{"and":[{"title":{"matches":"Back to the.*"}}]}]`
-	structFilter := NewDynamicFilter[Movie](dynamicFilterJsonIn)
-	dynamicFilterJsonOut := jsonx.MustMarshalToString(structFilter)
+	structFilterJsonIn := `[{"movieYear":{"eq":1985}},{"and":[{"title":{"matches":"Back to the.*"}}]}]`
+	structFilter := NewStructFilter[Movie](structFilterJsonIn)
+	structFilterJsonOut := jsonx.MustMarshalToString(structFilter)
 
-	assert.Equal(t, dynamicFilterJsonIn, dynamicFilterJsonOut)
+	assert.Equal(t, structFilterJsonIn, structFilterJsonOut)
 }
 
 func TestNewStructFilter_ComplexNestedFilter(t *testing.T) {
-	dynamicFilterJsonIn := `[{"movieYear":{"eq":1955}},{"or":[{"movieYear":{"eq":1985}},{"and":[{"title":{"eq":"BacktotheFuture"}}]}]}]`
-	structFilter := NewDynamicFilter[Movie](dynamicFilterJsonIn)
-	dynamicFilterJsonOut := jsonx.MustMarshalToString(structFilter)
+	structFilterJsonIn := `[{"movieYear":{"eq":1955}},{"or":[{"movieYear":{"eq":1985}},{"and":[{"title":{"eq":"BacktotheFuture"}}]}]}]`
+	structFilter := NewStructFilter[Movie](structFilterJsonIn)
+	structFilterJsonOut := jsonx.MustMarshalToString(structFilter)
 
-	assert.Equal(t, dynamicFilterJsonIn, dynamicFilterJsonOut)
+	assert.Equal(t, structFilterJsonIn, structFilterJsonOut)
 }
 
 func TestShouldInclude_SimpleEnumFilter(t *testing.T) {
-	dynamicFilterJson := `[{"kind": {"eq": "MOVIE"}}]`
-	structFilter := NewDynamicFilter[Movie](dynamicFilterJson)
+	structFilterJson := `[{"kind": {"eq": "MOVIE"}}]`
+	structFilter := NewStructFilter[Movie](structFilterJson)
 
 	result := structFilter.ShouldInclude(testMovie)
 
@@ -49,8 +49,8 @@ func TestShouldInclude_SimpleEnumFilter(t *testing.T) {
 }
 
 func TestShouldInclude_SimpleStringFilter(t *testing.T) {
-	dynamicFilterJson := `[{"title": {"eq": "Back to the Future"}}]`
-	structFilter := NewDynamicFilter[Movie](dynamicFilterJson)
+	structFilterJson := `[{"title": {"eq": "Back to the Future"}}]`
+	structFilter := NewStructFilter[Movie](structFilterJson)
 
 	result := structFilter.ShouldInclude(testMovie)
 
@@ -58,8 +58,8 @@ func TestShouldInclude_SimpleStringFilter(t *testing.T) {
 }
 
 func TestShouldInclude_SimpleNumberFilter(t *testing.T) {
-	dynamicFilterJson := `[{"movieYear": {"eq": 1985}}]`
-	structFilter := NewDynamicFilter[Movie](dynamicFilterJson)
+	structFilterJson := `[{"movieYear": {"eq": 1985}}]`
+	structFilter := NewStructFilter[Movie](structFilterJson)
 
 	result := structFilter.ShouldInclude(testMovie)
 
@@ -67,8 +67,8 @@ func TestShouldInclude_SimpleNumberFilter(t *testing.T) {
 }
 
 func TestShouldInclude_ImpliedLogicalAndFilter(t *testing.T) {
-	dynamicFilterJson := `[{"title": {"matches": "Back to the .*"}}, {"movieYear": {"eq": 1985}}]`
-	structFilter := NewDynamicFilter[Movie](dynamicFilterJson)
+	structFilterJson := `[{"title": {"matches": "Back to the .*"}}, {"movieYear": {"eq": 1985}}]`
+	structFilter := NewStructFilter[Movie](structFilterJson)
 
 	result := structFilter.ShouldInclude(testMovie)
 
@@ -76,8 +76,8 @@ func TestShouldInclude_ImpliedLogicalAndFilter(t *testing.T) {
 }
 
 func TestShouldInclude_ExplicitLogicalAndFilter(t *testing.T) {
-	dynamicFilterJson := `[{"movieYear": {"eq": 1985}}, {"and": [{"title": {"matches": "Back to the .*"}}]}]`
-	structFilter := NewDynamicFilter[Movie](dynamicFilterJson)
+	structFilterJson := `[{"movieYear": {"eq": 1985}}, {"and": [{"title": {"matches": "Back to the .*"}}]}]`
+	structFilter := NewStructFilter[Movie](structFilterJson)
 
 	result := structFilter.ShouldInclude(testMovie)
 
@@ -85,8 +85,8 @@ func TestShouldInclude_ExplicitLogicalAndFilter(t *testing.T) {
 }
 
 func TestShouldInclude_ExplicitLogicalOrFilter(t *testing.T) {
-	dynamicFilterJson := `[{"movieYear": {"eq": 1955}}, {"or": [{"title": {"matches": "Back to the .*"}}]}]`
-	structFilter := NewDynamicFilter[Movie](dynamicFilterJson)
+	structFilterJson := `[{"movieYear": {"eq": 1955}}, {"or": [{"title": {"matches": "Back to the .*"}}]}]`
+	structFilter := NewStructFilter[Movie](structFilterJson)
 
 	result := structFilter.ShouldInclude(testMovie)
 
@@ -94,16 +94,16 @@ func TestShouldInclude_ExplicitLogicalOrFilter(t *testing.T) {
 }
 
 func TestShouldInclude_ComplexNestedFilter(t *testing.T) {
-	dynamicFilterJson := `[{"movieYear": {"eq": 1955}}, {"or": [{"movieYear": {"eq": 1985}}, {"and": [{"title": {"eq": "Back to the Future"}}]}]}]`
-	structFilter := NewDynamicFilter[Movie](dynamicFilterJson)
+	structFilterJson := `[{"movieYear": {"eq": 1955}}, {"or": [{"movieYear": {"eq": 1985}}, {"and": [{"title": {"eq": "Back to the Future"}}]}]}]`
+	structFilter := NewStructFilter[Movie](structFilterJson)
 
 	result := structFilter.ShouldInclude(testMovie)
 	assert.True(t, result)
 }
 
 func TestShouldNotInclude_SimpleEnumFilter(t *testing.T) {
-	dynamicFilterJson := `[{"kind": {"eq": "SERIES"}}]`
-	structFilter := NewDynamicFilter[Movie](dynamicFilterJson)
+	structFilterJson := `[{"kind": {"eq": "SERIES"}}]`
+	structFilter := NewStructFilter[Movie](structFilterJson)
 
 	result := structFilter.ShouldInclude(testMovie)
 
@@ -111,8 +111,8 @@ func TestShouldNotInclude_SimpleEnumFilter(t *testing.T) {
 }
 
 func TestShouldNotInclude_SimpleStringFilter(t *testing.T) {
-	dynamicFilterJson := `[{"title": {"eq": "The Shawshank Redemption"}}]`
-	structFilter := NewDynamicFilter[Movie](dynamicFilterJson)
+	structFilterJson := `[{"title": {"eq": "The Shawshank Redemption"}}]`
+	structFilter := NewStructFilter[Movie](structFilterJson)
 
 	result := structFilter.ShouldInclude(testMovie)
 
@@ -120,8 +120,8 @@ func TestShouldNotInclude_SimpleStringFilter(t *testing.T) {
 }
 
 func TestShouldNotInclude_SimpleNumberFilter(t *testing.T) {
-	dynamicFilterJson := `[{"movieYear": {"eq": 1955}}]`
-	structFilter := NewDynamicFilter[Movie](dynamicFilterJson)
+	structFilterJson := `[{"movieYear": {"eq": 1955}}]`
+	structFilter := NewStructFilter[Movie](structFilterJson)
 
 	result := structFilter.ShouldInclude(testMovie)
 
@@ -129,8 +129,8 @@ func TestShouldNotInclude_SimpleNumberFilter(t *testing.T) {
 }
 
 func TestShouldNotInclude_ImpliedLogicalAndFilter(t *testing.T) {
-	dynamicFilterJson := `[{"title": {"matches": "Back to the .*"}}, {"movieYear": {"eq": 1955}}]`
-	structFilter := NewDynamicFilter[Movie](dynamicFilterJson)
+	structFilterJson := `[{"title": {"matches": "Back to the .*"}}, {"movieYear": {"eq": 1955}}]`
+	structFilter := NewStructFilter[Movie](structFilterJson)
 
 	result := structFilter.ShouldInclude(testMovie)
 
@@ -138,8 +138,8 @@ func TestShouldNotInclude_ImpliedLogicalAndFilter(t *testing.T) {
 }
 
 func TestShouldNotInclude_ExplicitLogicalAndFilter(t *testing.T) {
-	dynamicFilterJson := `[{"movieYear": {"eq": 1955}}, {"and": [{"title": {"matches": "Back to the .*"}}]}]`
-	structFilter := NewDynamicFilter[Movie](dynamicFilterJson)
+	structFilterJson := `[{"movieYear": {"eq": 1955}}, {"and": [{"title": {"matches": "Back to the .*"}}]}]`
+	structFilter := NewStructFilter[Movie](structFilterJson)
 
 	result := structFilter.ShouldInclude(testMovie)
 
@@ -147,8 +147,8 @@ func TestShouldNotInclude_ExplicitLogicalAndFilter(t *testing.T) {
 }
 
 func TestShouldNotInclude_ExplicitLogicalOrFilter(t *testing.T) {
-	dynamicFilterJson := `[{"movieYear": {"eq": 1955}}, {"or": [{"title": {"matches": "The Shawshank .*"}}]}]`
-	structFilter := NewDynamicFilter[Movie](dynamicFilterJson)
+	structFilterJson := `[{"movieYear": {"eq": 1955}}, {"or": [{"title": {"matches": "The Shawshank .*"}}]}]`
+	structFilter := NewStructFilter[Movie](structFilterJson)
 
 	result := structFilter.ShouldInclude(testMovie)
 
@@ -156,8 +156,8 @@ func TestShouldNotInclude_ExplicitLogicalOrFilter(t *testing.T) {
 }
 
 func TestShouldNotInclude_ComplexNestedFilter(t *testing.T) {
-	dynamicFilterJson := `[{"movieYear": {"eq": 1955}}, {"or": [{"movieYear": {"eq": 1985}}, {"and": [{"title": {"eq": "The Shawshank Redemption"}}]}]}]`
-	structFilter := NewDynamicFilter[Movie](dynamicFilterJson)
+	structFilterJson := `[{"movieYear": {"eq": 1955}}, {"or": [{"movieYear": {"eq": 1985}}, {"and": [{"title": {"eq": "The Shawshank Redemption"}}]}]}]`
+	structFilter := NewStructFilter[Movie](structFilterJson)
 
 	result := structFilter.ShouldInclude(testMovie)
 	assert.False(t, result)

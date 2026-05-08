@@ -5,9 +5,13 @@ package filter
 // license that can be found in the LICENSE file.
 //
 // Package filter provides the capability to do generic
-// filtering of objects by their fields. The filter
-// expression can be serialized to/from json, making
-// it useful for use in APIs.
+// filtering of lists of objects by their fields, using a JSON
+// boolean expression language, powered by the gval library.
+//
+// This package includes both a set of functions that can
+// orchestrate the filtering of slices, as well as
+// a way to create this capability dynamically for
+// any given struct.
 //
 // Example:
 // Suppose you have the following data structure:
@@ -19,21 +23,14 @@ package filter
 // 		}
 //
 // You can create an object that is able to filter any of these
-// fields using a JSON document that describes a boolean
+// fields using a JSON string that describes a boolean
 // expression; for example:
 //
 // 		movies := GetAllMovies()
 //
-// 		structFilter := NewDynamicFilter[Movie]
 // 		movieFilterJson := `[{"title": {"eq": "Back to the Future"}}]`
-//		jsonx.MustUnmarshalFromString(movieFilterJson, &movieFilter)
-// 		filteredMovies := structFilter.Filter(slices.Values(movies))
-// 		filteredMovieValues := slices.Collect(filteredMovies)
-//
-// Note: there is also a convenience function to create and populate
-// the filter in one step:
-//
-//    movieFilter := NewDynamicFilter[Movie](`[{"title": {"eq": "Interstellar"}}]`)
+// 		structFilter := NewStructFilter[Movie](movieFilterJson)
+// 		filteredMovies := filter.FilterAllFor[Movie](structFilter, movies)
 //
 // The JSON expression operators (e.g. "eq") are defined in the filter.Operator
 // struct. You can also create compound filters (using "and" and "or" operators).
@@ -56,10 +53,8 @@ package filter
 // 	func MovieSearch(ctx context.Context, filters: []MovieFilter) []Movie {
 // 		movies := GetAllMovies()
 //
-// 		// Wrap the MovieFilter object in a TypeFilter, then it can
-// 		// be used just like the dynamically-created one.
-// 		typeFilter := TypeFilter[Movie]{filters}
-// 		filteredMovies := typeFilter.Filter(slices.Values(movies))
-// 		filteredMovieValues := slices.Collect(filteredMovies)
+//    filterJson := jsonx.MustMarshalToString(filters)
+// 		structFilter := NewStructFilter[Movie](filterJson)
+// 		filteredMovies := filter.FilterAllFor[Movie](structFilter, movies)
 // 	}
 //

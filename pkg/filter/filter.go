@@ -118,7 +118,7 @@ func Filter(f Filterer, vals iter.Seq[any]) iter.Seq[any] {
 }
 
 // FilterFor is the generics-compatible version of Filter.
-func FilterFor[T any](f Filterer, vals iter.Seq[T]) iter.Seq[T] {
+func FilterFor[T any](f FiltererOf[T], vals iter.Seq[T]) iter.Seq[T] {
 	return func(yield func(T) bool) {
 		for v := range vals {
 			if !f.ShouldInclude(v) {
@@ -139,7 +139,7 @@ func FilterAll(f Filterer, vals []any) []any {
 }
 
 // FilterForAll is the generics-compatible version of FilterAll.
-func FilterForAll[T any](f Filterer, vals []T) []T {
+func FilterForAll[T any](f FiltererOf[T], vals []T) []T {
 	filterVals := FilterFor(f, slices.Values(vals))
 	return slices.Collect(filterVals)
 }
