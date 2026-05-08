@@ -22,15 +22,15 @@ package filter
 // 			MovieYear   int      `json:"movieYear"`
 // 		}
 //
-// You can create an object that is able to filter any of these
-// fields using a JSON string that describes a boolean
-// expression; for example:
+// You can create an object that is able to filter a list of Movies
+// based on Title, Description, or MovieYear using a JSON string
+// that describes a boolean expression; for example:
 //
 // 		movies := GetAllMovies()
 //
 // 		movieFilterJson := `[{"title": {"eq": "Back to the Future"}}]`
 // 		structFilter := NewStructFilter[Movie](movieFilterJson)
-// 		filteredMovies := filter.FilterAllFor[Movie](structFilter, movies)
+// 		filteredMovies := FilterAllFor[Movie](structFilter, movies)
 //
 // The JSON expression operators (e.g. "eq") are defined in the filter.Operator
 // struct. You can also create compound filters (using "and" and "or" operators).
@@ -42,10 +42,10 @@ package filter
 // definitions, etc.  For example:
 //
 // 		type MovieFilter struct {
-// 			Title     *filter.Operator `json:"title,omitempty"`
-// 			MovieYear *filter.Operator `json:"movieYear,omitempty"`
-// 			And       []*MovieFilter   `json:"and,omitempty"`
-// 			Or        []*MovieFilter   `json:"or,omitempty"`
+// 			Title     *Operator      `json:"title,omitempty"`
+// 			MovieYear *Operator      `json:"movieYear,omitempty"`
+// 			And       []*MovieFilter `json:"and,omitempty"`
+// 			Or        []*MovieFilter `json:"or,omitempty"`
 // 		}
 //
 // Then, the resolver for this API call would look something like this:
@@ -55,6 +55,6 @@ package filter
 //
 //    filterJson := jsonx.MustMarshalToString(filters)
 // 		structFilter := NewStructFilter[Movie](filterJson)
-// 		filteredMovies := filter.FilterAllFor(structFilter, movies)
+// 		filteredMovies := FilterAllFor(structFilter, movies)
 // 	}
 //

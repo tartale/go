@@ -33,21 +33,21 @@ func NewStructFilter[T any](inputJson string) StructFilter[T] {
 // MarshalJSON overrides the default JSON marshal function
 // so that the inner type is marshalled instead of the
 // StructFilter outer wrapper.
-func (df StructFilter[T]) MarshalJSON() ([]byte, error) {
-	return json.Marshal(df.Any)
+func (sf StructFilter[T]) MarshalJSON() ([]byte, error) {
+	return json.Marshal(sf.Any)
 }
 
 // UnmarshalJSON overrides the default JSON unmarshal function
 // so that the inner type is unmarshalled instead of the
 // StructFilter outer wrapper.
-func (df StructFilter[T]) UnmarshalJSON(data []byte) error {
-	return json.Unmarshal(data, df.Any)
+func (sf StructFilter[T]) UnmarshalJSON(data []byte) error {
+	return json.Unmarshal(data, sf.Any)
 }
 
 // ShouldInclude accepts an object of type T and determines
 // whether it passes the StructFilter for type T.
-func (df StructFilter[T]) ShouldInclude(val T) bool {
-	expression := GetExpression(df.Any)
+func (sf StructFilter[T]) ShouldInclude(val T) bool {
+	expression := GetExpression(sf.Any)
 	structWrapper := structs.New(val)
 	structWrapper.TagName = "json"
 	mapOfValues := structWrapper.Map()
