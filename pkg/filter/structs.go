@@ -46,7 +46,7 @@ func (df StructFilter[T]) UnmarshalJSON(data []byte) error {
 
 // ShouldInclude accepts an object of type T and determines
 // whether it passes the StructFilter for type T.
-func (df StructFilter[T]) ShouldInclude(val any) bool {
+func (df StructFilter[T]) ShouldInclude(val T) bool {
 	expression := GetExpression(df.Any)
 	structWrapper := structs.New(val)
 	structWrapper.TagName = "json"

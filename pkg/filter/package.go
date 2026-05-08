@@ -55,6 +55,6 @@ package filter
 //
 //    filterJson := jsonx.MustMarshalToString(filters)
 // 		structFilter := NewStructFilter[Movie](filterJson)
-// 		filteredMovies := filter.FilterAllFor[Movie](structFilter, movies)
+// 		filteredMovies := filter.FilterAllFor(structFilter, movies)
 // 	}
 //

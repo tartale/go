@@ -29,3 +29,18 @@ var testMovie = Movie{
 	Description: "The time travel adventures of Doc Brown and Marty McFly",
 	MovieYear:   1985,
 }
+
+var testMovieList = []Movie{
+	{
+		Kind:        MOVIE,
+		Title:       "Back to the Future",
+		Description: "The time travel adventures of Doc Brown and Marty McFly",
+		MovieYear:   1985,
+	},
+	{
+		Kind:        MOVIE,
+		Title:       "The Shawshank Redemption",
+		Description: "Andy Dufresne goes to prison with Morgan Freeman.",
+		MovieYear:   1994,
+	},
+}

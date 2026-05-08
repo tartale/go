@@ -162,3 +162,13 @@ func TestShouldNotInclude_ComplexNestedFilter(t *testing.T) {
 	result := structFilter.ShouldInclude(testMovie)
 	assert.False(t, result)
 }
+
+func TestFilterAllFor(t *testing.T) {
+	structFilterJson := `[{"movieYear": {"eq": 1955}}, {"or": [{"movieYear": {"eq": 1985}}, {"and": [{"title": {"eq": "Back to the Future"}}]}]}]`
+	structFilter := NewStructFilter[Movie](structFilterJson)
+
+	result := FilterAllFor(structFilter, testMovieList)
+
+	assert.Len(t, result, 1)
+	assert.Equal(t, "Back to the Future", result[0].Title)
+}

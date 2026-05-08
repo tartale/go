@@ -138,8 +138,8 @@ func FilterAll(f Filterer, vals []any) []any {
 	return slices.Collect(filterVals)
 }
 
-// FilterForAll is the generics-compatible version of FilterAll.
-func FilterForAll[T any](f FiltererOf[T], vals []T) []T {
+// FilterAllFor is the generics-compatible version of FilterAll.
+func FilterAllFor[T any](f FiltererOf[T], vals []T) []T {
 	filterVals := FilterFor(f, slices.Values(vals))
 	return slices.Collect(filterVals)
 }
