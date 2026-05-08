@@ -102,6 +102,16 @@ func Format(expression string) string {
 	return expression
 }
 
+// ShouldInclude takes a filter and a value and
+// determines if the the value passes the filter.
+func ShouldInclude(filter, val any) bool {
+	expression := GetExpression(filter)
+	values := GetValues(filter, val)
+	eval := MustEvaluate(expression, values)
+
+	return eval.(bool)
+}
+
 // Filter takes a sequence iterator and returns
 // an iterator function that can be applied to that input sequence.
 func Filter(f Filterer, vals iter.Seq[any]) iter.Seq[any] {
@@ -191,7 +201,7 @@ func replaceBrackets(s string) string {
 //
 // would be converted to:
 //
-//	`(title =~ "Back to the .*") and (movieYear == 1985)`
+//	`(title =~ "Back to the .*") && (movieYear == 1985)`
 func replaceLogicOperators(s string) string {
 	return strings.NewReplacer(
 		`,(or`, ` || (`,
