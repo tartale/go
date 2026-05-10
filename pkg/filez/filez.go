@@ -15,8 +15,8 @@ import (
 )
 
 // IsDir is a simple convenience function for the
-// os.IsDir() function, which ignores the error and
-// returns false.
+// os.Stat().IsDir() function, which returns false if the
+// file info cannot be obtained.
 func IsDir(name string) bool {
 
 	stat, err := os.Stat(name)
@@ -25,6 +25,16 @@ func IsDir(name string) bool {
 	}
 
 	return stat.IsDir()
+}
+
+func FileCount(name string) int {
+
+	dir, err := os.ReadDir(name)
+	if err != nil {
+		return 0
+	}
+
+	return len(dir)
 }
 
 // Exists returns true if the given file or directory

@@ -52,3 +52,19 @@ func Divide[IN1, IN2, OUT constraintz.Number](a IN1, b IN2, result *OUT, ops ...
 
 	*result = DivideTo[IN1, IN2, OUT](a, b, ops...)
 }
+
+func MultiplyTo[IN1, IN2, OUT constraintz.Number](a IN1, b IN2, ops ...func(float64) float64) OUT {
+	afloat := float64(a)
+	bfloat := float64(b)
+	result := afloat * bfloat
+	for _, op := range ops {
+		result = op(result)
+	}
+
+	return OUT(result)
+}
+
+func Multiply[IN1, IN2, OUT constraintz.Number](a IN1, b IN2, result *OUT, ops ...func(float64) float64) {
+
+	*result = DivideTo[IN1, IN2, OUT](a, b, ops...)
+}

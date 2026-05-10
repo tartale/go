@@ -9,10 +9,17 @@ import (
 	"github.com/tartale/go/pkg/reflectx"
 )
 
-func MustParseTo[T any](s string, optionalBase ...int) T {
-	result, err := ParseTo[T](s, optionalBase...)
+func MustParseTo[T any](s string, defaultVal ...T) T {
+	result, err := ParseTo[T](s)
 	if err != nil {
-		panic(err)
+		if len(defaultVal) > 1 {
+			panic(fmt.Errorf("%w: must provide exactly one default value; got: %v",
+				errorz.ErrInvalidArgument, defaultVal))
+		}
+		if len(defaultVal) == 0 {
+			panic(err)
+		}
+		return defaultVal[0]
 	}
 
 	return result
@@ -153,9 +160,9 @@ func ParseTo[T any](s string, optionalBase ...int) (T, error) {
 	return result, nil
 }
 
-func MustParse[T any](s string, dest *T, optionalBase ...int) {
+func MustParse[T any](s string, dest *T, defaultVal ...T) {
 
-	newVal := MustParseTo[T](s, optionalBase...)
+	newVal := MustParseTo[T](s, defaultVal...)
 	*dest = newVal
 }
 
