@@ -1,4 +1,4 @@
-package testingx
+package asserts
 
 import (
 	"fmt"
