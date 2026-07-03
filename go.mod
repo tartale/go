@@ -17,7 +17,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/vektah/gqlparser/v2 v2.5.15
 	golang.org/x/exp v0.0.0-20230817173708-d852ddb80c63
-	golang.org/x/image v0.38.0
+	golang.org/x/image v0.41.0
 )
 
 require (
